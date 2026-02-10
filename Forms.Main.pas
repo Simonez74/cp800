@@ -1010,6 +1010,8 @@ end;
 //   3) FormDestroy     → libero le liste (già vuote)
 // =================================================================
 procedure TMainForm.FormClose(Sender: TObject; var Action: TCloseAction);
+var
+  i : integer;
 begin
   FIsClosing := True;
 
@@ -1036,11 +1038,28 @@ begin
 //  FFrameList.Clear;
   if Assigned(FFrameList) then
   begin
-    try
+    {try
       FFrameList.Clear;
     except
       on E: Exception do
         LogToFile('FormClose - Errore durante FormClose -> clear frame list: ' + E.Message);
+    end;
+    }
+    try
+      for i := FFrameList.Count - 1 downto 0 do
+      begin
+        try
+          if Assigned(FFrameList[i]) then
+            FFrameList[i].Free;
+        except
+          on E: Exception do
+            LogToFile('Errore liberazione frame ' + IntToStr(i) + ': ' + E.Message);
+        end;
+      end;
+      FFrameList.Clear;
+    except
+      on E: Exception do
+        LogToFile('FormClose - Errore durante FormClose: ' + E.Message);
     end;
   end;
 
@@ -1068,6 +1087,7 @@ begin
     end;
   end;
 
+  action := TCloseAction.caFree;
 end;
 
 procedure TMainForm.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
