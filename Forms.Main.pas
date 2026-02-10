@@ -1,0 +1,1075 @@
+﻿unit Forms.Main;
+
+(*
+1. Forms_Main.CreatePanels
+   └─ FFrame.Start()
+       ├─ Crea FMonitor, lo avvia
+       └─ InitWeightMonitor() → crea FMonitorWeight (NON lo avvia)
+
+2. Primo ciclo FMonitor (dopo ~200ms)
+   └─ MonitorParsed popola le label
+       └─ lbl1102 cambia → UpdateMonitorState
+            └─ FMonitorWeight.UpdateState('P: 1', true, '1')
+                 └─ ApplyStateChange IMMEDIATAMENTE (no timer!)
+                      ├─ FCurrentState := NewState  ← VALORIZZATO
+                      └─ Start()  ← AVVIA thread FTP pesi
+
+3. Secondo ciclo FMonitorWeight
+   └─ ProcessWeightData
+       └─ CurrentOutputPath := FCurrentState.OutputFileName  ← OK!
+       └─ Scrive i pesi sul CSV
+
+*)
+
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
+  Vcl.Graphics,  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.AppEvnts,
+ FireDAC.Comp.DataSet, FireDAC.Comp.Client,
+   Vcl.ExtCtrls
+  , System.IOUtils, Vcl.Menus, Vcl.PlatformDefaultStyleActnCtrls, Vcl.ActnPopup, System.Actions, Vcl.ActnList,
+  Vcl.ComCtrls
+  ,system.UITypes, System.ImageList, Vcl.ImgList, Vcl.StdCtrls, Vcl.WinXCtrls, Vcl.ToolWin
+  ,FrameMain
+  ,System.Generics.Collections
+
+  ,Frame.Configuration, ConfigManager
+  //MyThreadLog
+  ,System.Threading
+  ,DMI_Console,  TypeUnit, MyThreadLog,   funzioni
+  ;
+
+const
+//   FTPData_056.txt
+  StartFileName = 'FTPData_';
+  StartFileProdName = 'FTPData2_';
+
+type
+
+  TMioTabSheet = class (TTabSheet)
+  private
+    FIdCp800 : String;
+  public
+    property idCp800 : String read FIdCp800 write FIdCp800;
+  end;
+
+
+
+  TMainForm = class(TForm)
+    ApplicationEvents1: TApplicationEvents;
+    ActionList1: TActionList;
+    ActionConfigurazione: TAction;
+    MainPageControl: TPageControl;
+    PanelTop: TPanel;
+    ToolBar1: TToolBar;
+    ToolButtonConfig: TToolButton;
+    ToolButton1: TToolButton;
+    ToolButtonRefresh: TToolButton;
+    PanelConfig: TPanel;
+    ImageList1: TImageList;
+    ToolButton2: TToolButton;
+    LabelDBStatus: TLabel;
+    PanelMain: TPanel;
+    StatusBar1: TStatusBar;
+    ActionRefresh: TAction;
+
+    // pannello connessione
+    PanelConnection: TPanel;
+    LabelConnectionStatus: TLabel;
+    AnimationConnection: TActivityIndicator;
+    MemoConnectionError: TMemo;
+    ButtonRetryConnection: TButton;
+
+    procedure FormCreate(Sender: TObject);
+    procedure FormShow(Sender: TObject);
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure FormDestroy(Sender: TObject);
+    procedure ApplicationEvents1Exception(Sender: TObject; E: Exception);
+    procedure ActionRefreshExecute(Sender: TObject);
+    procedure ButtonRetryConnectionClick(Sender: TObject);
+    procedure ToolButtonConfigClick(Sender: TObject);
+    procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
+  private
+    { Private declarations }
+    FFrameList: TObjectList<TFrameCp800>;
+    FFrameConfig: TFrameConfiguration;
+    FConfigManager: TConfigManager;
+    FConfigVisible: Boolean;
+    FDatabaseConnected: Boolean;
+
+    procedure ShowConnectionPanel(const AMessage: string; AShowRetry: Boolean = False);
+    procedure HideConnectionPanel;
+    procedure UpdateConnectionStatus(const AStatus: string; AColor: TColor);
+
+    procedure ConnectToDatabase;
+    procedure CreatePanels;
+    procedure ToggleConfigPanel;
+    procedure UpdateStatusBar;
+    procedure ApplyConfigurationToApp;
+    procedure PerformEmergencyCleanup;
+
+    procedure StopAllMonitors;
+    procedure RestartAllMonitors;
+  public
+    { Public declarations }
+    procedure RefreshAll;
+  end;
+
+var
+  MainForm: TMainForm;
+
+
+/// il flusso è : ConnectToDatabase -> crea i frame → ogni frame si gestisce da solo.
+//  FormDestroy → libera la lista → ogni frame si distrugge → ogni monitor si ferma.
+
+implementation
+
+{$R *.dfm}
+
+//uses Myfunc.Utils, Myfunc.Strings;
+//uses Myfunc.Utils;
+
+{ TForm1 }
+
+
+
+
+procedure TMainForm.FormCreate(Sender: TObject);
+begin
+  FDatabaseConnected := False;
+
+  // Creo il ConfigManager
+  FConfigManager := TConfigManager.Create;
+  // Carica configurazione
+  try
+    FConfigManager.LoadFromFile;
+  except
+    on E: Exception do
+      MyThreadLog.LogToFile('Errore caricamento configurazione: ' + E.Message);
+  end;
+
+  FFrameList := TObjectList<TFrameCp800>.Create(true);
+
+  // Crea frame configurazione
+  FFrameConfig := TFrameConfiguration.Create(Self);
+  FFrameConfig.Parent := PanelConfig;
+  FFrameConfig.Align := alClient;
+  FFrameConfig.SetConfigManager(FConfigManager);
+
+  FConfigVisible := False;
+
+  // Setup pannello connessione (inizialmente nascosto)
+  PanelConnection.Visible := False;
+
+  // Configurazione degli ApplicationEvents
+  ApplicationEvents1.OnException := ApplicationEvents1Exception;
+end;
+
+procedure TMainForm.FormShow(Sender: TObject);
+begin
+  Caption :=  Application.title +  ' Version: ' +  VersionInformation;
+
+  // Mostra pannello (gira nel thread principale)
+  ShowConnectionPanel('Connessione al database in corso...', False);
+
+  ConnectToDatabase;
+end;
+
+procedure TMainForm.ShowConnectionPanel(const AMessage: string; AShowRetry: Boolean);
+begin
+  PanelConnection.Visible := True;
+  PanelConnection.BringToFront;
+
+  LabelConnectionStatus.Caption := AMessage;
+  AnimationConnection.Animate := not AShowRetry;
+  ButtonRetryConnection.Visible := AShowRetry;
+  MemoConnectionError.Visible := AShowRetry;
+
+  if not AShowRetry then
+    MemoConnectionError.Lines.Clear;
+end;
+
+
+procedure TMainForm.StopAllMonitors;
+var
+//  frame: TFFtpServer;
+  frame : TFrameCp800;
+  i: Integer;
+  ErrorCount, StoppedCount: Integer;
+begin
+  StoppedCount := 0;
+  ErrorCount := 0;
+
+  Screen.Cursor := crHourGlass;
+  try
+
+    // PASSO 1:
+    // Fermo tutti i monitor in ordine inverso (ultimo creato, primo fermato)
+    for i := FFrameList.Count - 1 downto 0 do
+    begin
+      frame := FFrameList[i];
+      if Assigned(frame) then
+      begin
+        try
+          frame.StopAllMonitoring;
+//            frame.Shutdown;
+          Inc(StoppedCount);
+  //          LogToFile(Format('Monitor %d fermato con successo', [i]));
+
+        except
+          on E: Exception do
+          begin
+            Inc(ErrorCount);
+            LogToFile(Format('Errore durante stop monitor %d: %s', [i, E.Message]));
+            // Log dell'errore (opzionale)
+            // ShowMessage('Error stopping monitor: ' + E.Message);
+          end;
+        end;
+      end;
+    end;
+
+
+    // Log finale
+    LogToFile(Format('StopAllMonitors completed: %d stopped, %d error',
+                     [StoppedCount, ErrorCount]));
+
+    // mostro un messaggio se ci sono stati errori
+    if ErrorCount > 0 then
+      ShowMessage(Format('Attention: %d monitors generated errors during shutdown.' +
+                         sLineBreak + 'See log for details.',
+                         [ErrorCount]))
+    else
+      ShowMessage('Tutti i monitor sono stati fermati correttamente.');
+
+
+  finally
+    Screen.Cursor := crDefault;
+    // Aggiorna la status bar
+    UpdateStatusBar;
+  end;
+
+
+end;
+
+procedure TMainForm.HideConnectionPanel;
+begin
+  AnimationConnection.Animate := False;
+  PanelConnection.Visible := False;
+end;
+
+procedure TMainForm.PerformEmergencyCleanup;
+begin
+  LogToFile('Inizio pulizia di emergenza...');
+
+  // 1. Chiudi connessione database
+  try
+    if Assigned(DMIConsole) and Assigned(DMIConsole.FDConnection) and
+       DMIConsole.FDConnection.Connected then
+    begin
+      DMIConsole.FDConnection.Connected := False;
+      LogToFile('Database disconnesso');
+    end;
+  except
+    on E: Exception do
+      LogToFile('Errore chiusura database: ' + E.Message);
+  end;
+
+  // 2. Ferma tutti i task/thread attivi
+  try
+    if Assigned(FFrameList) then
+    begin
+      // Ferma i task nei frame prima di distruggerli
+      for var Frame in FFrameList do
+      begin
+        try
+          if Assigned(Frame) then
+            Frame.Shutdown;
+        except
+          on E: Exception do
+            LogToFile('Errore stop task frame: ' + E.Message);
+        end;
+      end;
+    end;
+  except
+    on E: Exception do
+      LogToFile('Errore durante stop tasks: ' + E.Message);
+  end;
+
+  // 3. Libera risorse
+  try
+    if Assigned(FFrameList) then
+    begin
+      FreeAndNil(FFrameList);
+      LogToFile('Frame list liberata');
+    end;
+  except
+    on E: Exception do
+      LogToFile('Errore liberazione frame list: ' + E.Message);
+  end;
+
+  LogToFile('Pulizia di emergenza completata');
+
+end;
+
+procedure TMainForm.UpdateConnectionStatus(const AStatus: string; AColor: TColor);
+begin
+  LabelDBStatus.Caption := AStatus;
+  LabelDBStatus.Font.Color := AColor;
+
+  if Assigned(StatusBar1) and (StatusBar1.Panels.Count > 0) then
+    StatusBar1.Panels[0].Text := AStatus;
+end;
+
+
+
+procedure TMainForm.ButtonRetryConnectionClick(Sender: TObject);
+begin
+  ShowConnectionPanel('Riconnessione in corso...', False);
+  Application.ProcessMessages;
+  ConnectToDatabase;
+end;
+
+procedure TMainForm.CreatePanels;
+var
+  QAppo : TFDQuery;
+  LCountCp800 : integer;
+  FFrame : TFrameCp800;
+  TabSheet: TMioTabSheet;
+  IpForFile : String;
+  FNameFile : String;
+  FNameFileProd : String;
+  ServerCfg: TServerConfig;
+begin
+  if not FDatabaseConnected then
+  begin
+    ShowMessage('Database non connesso. Impossibile caricare le macchine.');
+    Exit;
+  end;
+  // --- 1) Crea la mappa codici (condivisa tra i due monitor)
+  FFrameList.Clear;
+
+  // Rimuovo tutte le tab esistenti
+  while MainPageControl.PageCount > 0 do
+    MainPageControl.Pages[0].Free;
+
+  qappo := TFDQuery.Create(nil);
+  try
+    qappo.Connection := DMIConsole.FDConnection;
+    qappo.SQL.Add('select * from cp800_setup where cp800_enabled = 1');
+    qappo.SQL.Add(' order by cast(CP800_ID as unsigned) ');
+    QAppo.Open ;
+
+    LCountCp800 := qappo.RecordCount;
+
+    if not (LCountCp800 > 0)  then
+    begin
+      ShowMessage('Attenzione! Non risulta attiva nessuna macchina');
+      exit;
+    end;
+
+    while not QAppo.EOF do
+    begin
+      TabSheet := TMioTabSheet.Create(MainPageControl);
+      TabSheet.Caption := Qappo.FieldByName('cp800_Name').AsString;
+      TabSheet.idCp800 := QAppo.FieldByName('cp800_id').asstring;
+      TabSheet.PageControl := MainPageControl;
+      TabSheet.Color:= $00FCE7BE;
+
+//      FFrame := TFrameCp800.Create(TabSheet,  QAppo.FieldByName('cp800_id').asstring);
+//      FFrame := TFFtpServer.Create( TabSheet );
+      FFrame := TFrameCp800.Create( TabSheet );
+      FFrame.Align := alClient;
+      FFrame.Parent := TabSheet;
+      fframe.Name := Format('ServerFrame_%d', [FFrameList.Count + 1]);
+      //     FFrame.Cp800id :=  QAppo.FieldByName('cp800_id').asstring ;
+      try
+        IpForFile := QAppo.FieldByName('cp800_ip').asstring;
+        while  Pos('.',IpForFile) > 0 do
+          IpForFile := copy ( IpForFile, Pos('.',IpForFile) +1 , length(IpForFile ));
+        if length(IpForFile ) < 3 then
+          IpForFile:= concat( StringOfChar('0', 3 - length(IpForFile )) , IpForFile )  ;
+
+        FNameFile:= concat ( StartFileName, IpForFile, '.txt');
+        FNameFileProd:=  concat ( StartFileProdName, IpForFile, '.txt');
+
+        if QAppo.FieldByName('FtpPath').AsString.EndsWith('/') then
+        begin
+          FNameFile := QAppo.FieldByName('FtpPath').AsString+  FNameFile;
+          FNameFileProd := QAppo.FieldByName('FtpPath').AsString+  FNameFileProd;
+        end
+        else
+        begin
+          FNameFile := QAppo.FieldByName('FtpPath').AsString+ '/' + FNameFile ;
+          FNameFileProd := QAppo.FieldByName('FtpPath').AsString+ '/' + FNameFileProd;
+        end;
+
+        ServerCfg.Host := QAppo.FieldByName('cp800_ip').asstring;
+        ServerCfg.Port := QAppo.FieldByName('FtpPort').AsInteger;
+        ServerCfg.Username := QAppo.FieldByName('FtpUser').AsString;
+        ServerCfg.Password := QAppo.FieldByName('FtpPassword').AsString;
+        ServerCfg.RemotePath :=  QAppo.FieldByName('FtpPath').AsString;
+        ServerCfg.FileName := FNameFile;
+        ServerCfg.FileNameProd := FNameFileProd;
+        ServerCfg.id := QAppo.FieldByName('cp800_id').asstring;
+        ServerCfg.NameMachine :=QAppo.FieldByName('cp800_name').asstring;
+        ServerCfg.Intervall := QAppo.FieldByName('FtpIdle').AsInteger;
+        ServerCfg.PassiveMode := QAppo.FieldByName('FtpPassiveMode').AsBoolean;
+
+        Fframe.Configure( ServerCfg);
+  //      Fframe.ConfigureWeightMonitor(  ServerCfg.FileNameData,  'out_server21.csv', 500);
+  //      Fframe.ConfigureWeightMonitor( ServerCfg.FileNameData,  QAppo.FieldByName('FtpIdle').AsInteger);
+
+
+          // ═══════════════════════════════════════════════════════════════════
+          // AVVIA IL FRAME - tutto parte da qui!
+          // ═══════════════════════════════════════════════════════════════════
+          // Start() fa:
+          //   1. Crea FMonitor (dati generali) e lo avvia
+          //   2. Chiama InitWeightMonitor → crea FMonitorWeight (dati pesi) ma NON lo avvia
+          //   3. FMonitorWeight parte automaticamente quando le label vengono populate
+          // ═══════════════════════════════════════════════════════════════════
+          Fframe.Start;
+          //  InitWeightMonitor viene chiamato dentro Start() e il monitor dei pesi
+          // parte automaticamente quando serve.
+          FFrameList.Add(FFrame);
+      except
+        on E: Exception do
+        begin
+          LogToFile(Format('Errore configurazione frame CP800 %s: %s',
+                          [QAppo.FieldByName('cp800_id').asstring, E.Message]));
+          // Il frame non viene aggiunto alla lista e verrà distrutto con TabSheet
+          FFrame.Free;
+        end;
+      end;
+
+      qappo.next;
+    end;
+
+     LogToFile(Format('Caricate %d macchine CP800', [LCountCp800]));
+
+  finally
+    if assigned(qappo) then
+    begin
+      qappo.close;
+      qappo.free;
+    end;
+  end;
+
+  UpdateStatusBar;
+
+  // Seleziona la prima tab
+  if MainPageControl.PageCount > 0 then
+    MainPageControl.ActivePageIndex := 0;
+end;
+
+procedure TMainForm.RefreshAll;
+begin
+  if not FDatabaseConnected then
+  begin
+    if MessageDlg('Database non connesso. Tentare la riconnessione?',
+                  mtConfirmation, [mbYes, mbNo], 0) = mrYes then
+    begin
+      ButtonRetryConnectionClick(nil);
+    end;
+    Exit;
+  end;
+
+  // Pulisco frame esistenti con protezione eccezioni
+  try
+    FFrameList.Clear;
+  except
+    on E: Exception do
+    begin
+      LogToFile('Errore durante Clear frame list: ' + E.Message);
+      // Forza svuotamento anche in caso di errore
+      try
+        while FFrameList.Count > 0 do
+          FFrameList.Delete(0);
+      except
+      end;
+    end;
+  end;
+
+   // Pulisci tabs
+  try
+    while MainPageControl.PageCount > 0 do
+      MainPageControl.Pages[0].Free;
+  except
+    on E: Exception do
+      LogToFile('Errore durante Clear tab pages: ' + E.Message);
+  end;
+
+
+  // Ricarica
+  try
+    CreatePanels;
+  except
+    on E: Exception do
+    begin
+      ShowMessage('Errore durante il refresh: ' + E.Message);
+      LogToFile('Errore RefreshAll: ' + E.Message);
+    end;
+  end;
+end;
+
+procedure TMainForm.RestartAllMonitors;
+var
+  Frame: TFrameCp800;
+  i: Integer;
+begin
+  for i := 0 to FFrameList.Count - 1 do
+  begin
+    Frame := FFrameList[i];
+    if Assigned(Frame) then
+    begin
+      try
+        Frame.RestartAllMonitoring;
+      except
+        on E: Exception do
+          LogToFile(Format('Errore riavviando frame %d: %s', [i, E.Message]));
+      end;
+    end;
+  end;
+
+  UpdateStatusBar;
+
+end;
+
+procedure TMainForm.UpdateStatusBar;
+begin
+  if not Assigned(StatusBar1) then
+    Exit;
+
+  if StatusBar1.Panels.Count < 4 then
+    Exit;
+
+  // Pannello 0: Stato connessione
+  if FDatabaseConnected then
+    StatusBar1.Panels[0].Text := 'Database: Connesso'
+  else
+    StatusBar1.Panels[0].Text := 'Database: Non connesso';
+
+  // Pannello 1: Numero macchine
+  StatusBar1.Panels[1].Text := Format('CP800 Attivi: %d', [FFrameList.Count]);
+
+  // Pannello 2: Ultimo aggiornamento
+  StatusBar1.Panels[2].Text := 'Ultimo aggiornamento: ' + FormatDateTime('hh:nn:ss', Now);
+
+  // Pannello 3: Vuoto (per eventuali usi futuri)
+  StatusBar1.Panels[3].Text := '';
+end;
+
+procedure TMainForm.ApplyConfigurationToApp;
+begin
+  // Chiudi connessione esistente
+  if DMIConsole.FDConnection.Connected then
+  begin
+    try
+      DMIConsole.FDConnection.Connected := False;
+      FDatabaseConnected := False;
+    except
+      on E: Exception do
+        LogToFile('Errore chiusura connessione: ' + E.Message);
+    end;
+  end;
+
+  // Tenta nuova connessione con i parametri aggiornati
+  ConnectToDatabase ;
+end;
+
+procedure TMainForm.ConnectToDatabase ;
+begin
+
+  // Verifica se già connesso
+  if Assigned(DMIConsole) and DMIConsole.FDConnection.Connected then
+  begin
+    FDatabaseConnected := True;
+    Exit;
+  end;
+
+  if not Assigned(DMIConsole) then
+  begin
+    LogToFile('ERRORE: DMIConsole non inizializzato');
+    ShowConnectionPanel('Errore: DataModule non disponibile', True);
+    Exit;
+  end;
+
+
+  LogToFile('Connessione al database riuscita: ' +
+                FConfigManager.Config.DBHost + ':' +
+                FConfigManager.Config.DBPort.ToString);
+
+  // Lancia un thread separato
+  TTask.Run(
+    procedure
+    var
+//      ErrorMsg: string;
+      ConnResult: TConnectionResult;
+    begin
+      try
+        //  QUESTO CODICE GIRA IN UN THREAD SEPARATO
+        //  NON nel thread principale!
+        // per cui NON blocca la UI
+        ConnResult := DMIConsole.Connect(
+          FConfigManager.Config.DBHost,
+          FConfigManager.Config.DBPort,
+          FConfigManager.Config.DBName,
+          FConfigManager.Config.DBUser,
+          FConfigManager.Config.DBPassword
+        );
+
+        { // OPZIONE 2: Connessione con retry automatico
+        ConnResult := DMIConsole.ConnectWithRetry(
+          FConfigManager.Config.DBHost,
+          FConfigManager.Config.DBPort,
+          FConfigManager.Config.DBName,
+          FConfigManager.Config.DBUser,
+          FConfigManager.Config.DBPassword,
+          3,     // Max 3 tentativi
+          2000   // Attesa 2 secondi tra un tentativo e l'altro
+        );
+        }
+        // Torna al thread principale per aggiornare la UI
+        TThread.Synchronize(nil,
+          procedure
+          begin
+            //  QUESTO CODICE GIRA NEL THREAD PRINCIPALE
+            //  Qui modifico la UI           │
+            FDatabaseConnected := ConnResult.Success;
+            if ConnResult.Success then
+            begin
+              HideConnectionPanel;
+              UpdateConnectionStatus('Database: Connesso', clGreen);
+              // Carico le macchine
+              try
+                CreatePanels;
+                UpdateStatusBar;
+              except
+                on E: Exception do
+                begin
+                  ShowConnectionPanel('Errore: ' + E.Message, True);
+                  LogToFile('Errore CreatePanels: ' + E.Message);
+                end;
+              end;
+            end
+            else
+            begin
+              // Connessione fallita
+              UpdateConnectionStatus('Database: Non connesso', clRed);
+              UpdateStatusBar;
+
+              MemoConnectionError.Lines.Clear;
+              MemoConnectionError.Lines.Add('Impossibile connettersi al database');
+              MemoConnectionError.Lines.Add('');
+              MemoConnectionError.Lines.Add('Dettagli errore:');
+              MemoConnectionError.Lines.Add(Format('[%s] %s',
+                                                  [ConnResult.ErrorClass,
+                                                   ConnResult.ErrorMessage]));
+              MemoConnectionError.Lines.Add('');
+              MemoConnectionError.Lines.Add('Parametri di connessione:');
+              MemoConnectionError.Lines.Add('Host: ' + FConfigManager.Config.DBHost);
+              MemoConnectionError.Lines.Add('Porta: ' + FConfigManager.Config.DBPort.ToString);
+              MemoConnectionError.Lines.Add('Database: ' + FConfigManager.Config.DBName);
+              MemoConnectionError.Lines.Add('Utente: ' + FConfigManager.Config.DBUser);
+              MemoConnectionError.Lines.Add('');
+              MemoConnectionError.Lines.Add(Format('Tentativi effettuati: %d',
+                                                  [DMIConsole.ConnectionAttempts]));
+
+              ShowConnectionPanel('', True);  // Mostra pannello con bottone Retry
+              ButtonRetryConnection.Visible := True;
+            end;
+          end
+        );
+        except
+        on E: Exception do
+        begin
+          LogToFile('ERRORE in task connessione: ' + E.Message);
+          TThread.Synchronize(nil,
+            procedure
+            begin
+              ShowConnectionPanel('Errore di connessione: ' + E.Message, True);
+              UpdateConnectionStatus('Database: Errore', clRed);
+            end
+          );
+        end;
+      end;
+    end
+  );
+end;
+
+procedure TMainForm.ToggleConfigPanel;
+begin
+  FConfigVisible := not FConfigVisible;
+  PanelConfig.Visible := FConfigVisible;
+  PanelMain.Visible := not FConfigVisible;
+
+  if FConfigVisible then
+  begin
+    PanelConfig.Align := alClient;
+    FFrameConfig.LoadConfiguration;
+    ToolButtonConfig.Down := True;
+  end
+  else
+  begin
+    ToolButtonConfig.Down := False;
+
+    if FFrameConfig.Modified then
+    begin
+      case MessageDlg('Ci sono modifiche non salvate. Cosa vuoi fare?' + sLineBreak +
+                      sLineBreak +
+                      'Sì = Salva e applica' + sLineBreak +
+                      'No = Scarta modifiche' + sLineBreak +
+                      'Annulla = Torna alla configurazione',
+                      mtConfirmation, [mbYes, mbNo, mbCancel], 0) of
+        mrYes:
+        begin
+          FFrameConfig.SaveConfiguration;
+          ApplyConfigurationToApp;
+
+          if FDatabaseConnected and
+             (MessageDlg('Ricaricare le macchine CP800?',
+                        mtConfirmation, [mbYes, mbNo], 0) = mrYes) then
+            RefreshAll;
+        end;
+
+        mrNo:
+        begin
+          FFrameConfig.LoadConfiguration;
+        end;
+
+        mrCancel:
+        begin
+          // Riapro il pannello
+          FConfigVisible := True;
+          PanelConfig.Visible := True;
+          ToolButtonConfig.Down := True;
+          Exit;
+        end;
+      end;
+    end;
+  end;
+  {
+  if (not ToolButtonConfig.Down ) and (MessageDlg('Restart monitor ?',
+                  mtConfirmation, [mbYes, mbNo], 0) = mrYes) then
+      RestartAllMonitors;
+      }
+end;
+
+procedure TMainForm.ToolButtonConfigClick(Sender: TObject);
+var
+  Response: Integer;
+begin
+
+   // Pulisco frame esistenti con protezione eccezioni
+  try
+    FFrameList.Clear;
+  except
+    on E: Exception do
+    begin
+      LogToFile('Errore durante Clear frame list: ' + E.Message);
+      // Forza svuotamento anche in caso di errore
+      try
+        while FFrameList.Count > 0 do
+          FFrameList.Delete(0);
+      except
+      end;
+    end;
+  end;
+
+   // Pulisci tabs
+  try
+    while MainPageControl.PageCount > 0 do
+      MainPageControl.Pages[0].Free;
+  except
+    on E: Exception do
+      LogToFile('Errore durante Clear tab pages: ' + E.Message);
+  end;
+
+
+
+
+
+
+  if Assigned(FFrameList) and ( FFrameList.Count > 0 ) then
+  begin
+    response := MessageDlg(
+      Format('There are %d active FTP monitor FTP. Do you want to stop it and access to configuration ? ',
+        [FFrameList.count]),
+      mtConfirmation,
+      [mbYes, mbNo],
+      0
+    );
+
+    if response = mrYes then
+    begin
+
+      try
+        FFrameList.Clear;
+      except
+        on E: Exception do
+        begin
+          LogToFile('Errore durante Clear frame list: ' + E.Message);
+          // Forza svuotamento anche in caso di errore
+          try
+            while FFrameList.Count > 0 do
+              FFrameList.Delete(0);
+          except
+          end;
+        end;
+      end;
+
+       // Pulisci tabs
+      try
+        while MainPageControl.PageCount > 0 do
+          MainPageControl.Pages[0].Free;
+      except
+        on E: Exception do
+          LogToFile('Errore durante Clear tab pages: ' + E.Message);
+      end;
+
+
+
+
+
+
+//      StopAllMonitors;
+      LogToFile('Tutti i monitor fermati dall''utente per accedere alla configurazione');
+    end
+    else
+      exit;
+  end;
+   // Se tutto ok
+  ToggleConfigPanel;
+end;
+
+procedure TMainForm.ActionRefreshExecute(Sender: TObject);
+begin
+  RefreshAll;
+end;
+
+procedure TMainForm.ApplicationEvents1Exception(Sender: TObject; E: Exception);
+var
+  ErrorMsg: string;
+//  IsCritical: Boolean;
+begin
+  // ═══════════════════════════════════════════════════════════
+  // 1. LOGGO SEMPRE L'ERRORE
+  // ═══════════════════════════════════════════════════════════
+  try
+    ErrorMsg := Format('ERRORE [%s] %s', [E.ClassName, E.Message]);
+    LogToFile( 'Eccezione non gestita -> ' +  ErrorMsg);
+  except
+    // Se anche il log fallisce, ignoro
+  end;
+    // Mostra un messaggio di errore all'utente
+ { try
+    MessageBox(Application.Handle,
+               PChar('Si è verificato un errore critico nell''applicazione.' + sLineBreak +
+                     'L''applicazione verrà chiusa.' + sLineBreak + sLineBreak +
+                     'Dettagli: ' + E.Message),
+               'Errore Critico',
+               MB_OK or MB_ICONERROR);
+  except
+    // Ignora errori durante la visualizzazione del messaggio
+  end;
+  }
+  {
+  // Durante la chiusura, ignoro alcuni errori comuni
+  if Application.Terminated then
+  begin
+    // Ignoro errori di accesso a componenti durante shutdown
+    if (E is EAccessViolation) or
+       (E is EInvalidPointer) or
+       (E.Message.Contains('canvas')) or
+       (E.Message.Contains('destroyed')) then
+    begin
+      LogToFile('Eccezione ignorata durante chiusura applicazione');
+      Exit;
+    end;
+  end;
+
+  }
+
+
+  try
+    ShowMessage('Errore: ' + E.Message + sLineBreak + sLineBreak +
+                'L''errore è stato registrato. L''applicazione continuerà.');
+  except
+  end;
+  // non chiudo mai applicazione ma loggo errore eventualemnte l'operatore può decidere se chiudere
+
+
+  (*
+  // ═══════════════════════════════════════════════════════════
+  // 2. DETERMINO SE L'ERRORE È CRITICO
+  // ═══════════════════════════════════════════════════════════
+  IsCritical := False;
+
+  // Errori critici che richiedono chiusura dell'applicazione
+  if (E is EOutOfMemory) or           // Memoria esaurita
+     (E is EStackOverflow) or         // Stack overflow
+     (E is EAccessViolation) or       // Access violation (puntatori invalidi)
+     (E is EInvalidPointer) or        // Puntatore invalido
+     (E is EExternalException) then   // Eccezione esterna (es. SO)
+  begin
+    IsCritical := True;
+    LogToFile('ERRORE CRITICO RILEVATO - Chiusura applicazione necessaria - ' + E.Message);
+  end;
+
+ // ═══════════════════════════════════════════════════════════
+  // 3. GESTIONE IN BASE ALLA GRAVITÀ
+  // ═══════════════════════════════════════════════════════════
+  if IsCritical then
+  begin
+    // ───────────────────────────────────────────────────────
+    // ERRORE CRITICO - Chiudi l'applicazione
+    // ───────────────────────────────────────────────────────
+    try
+      // Mostra messaggio all'utente
+      MessageBox(
+        Application.Handle,
+        PChar('Si è verificato un errore critico.' + sLineBreak +
+              'L''applicazione verrà chiusa.' + sLineBreak + sLineBreak +
+              'Dettagli: ' + E.Message + sLineBreak + sLineBreak +
+              'Consultare il file di log per maggiori informazioni.'),
+        'Errore Critico',
+        MB_OK or MB_ICONERROR or MB_SYSTEMMODAL
+      );
+    except
+      // Ignora errori nel mostrare il messaggio
+    end;
+
+    // Esegui pulizia controllata
+    try
+      PerformEmergencyCleanup;
+    except
+      // Ignora errori durante la pulizia
+    end;
+
+    // Termina SUBITO l'applicazione
+    Halt(1);
+  end
+  else
+  begin
+    // ───────────────────────────────────────────────────────
+    // ERRORE NON CRITICO - Mostra messaggio e continua
+    // ───────────────────────────────────────────────────────
+    try
+      MessageBox(
+        Application.Handle,
+        PChar('Si è verificato un errore:' + sLineBreak + sLineBreak +
+              E.Message + sLineBreak + sLineBreak +
+              'L''errore è stato registrato nel log.' + sLineBreak +
+              'L''applicazione continuerà a funzionare.'),
+        'Errore',
+        MB_OK or MB_ICONWARNING
+      );
+    except
+      // Ignora errori nel mostrare il messaggio
+    end;
+
+    // L'applicazione CONTINUA a funzionare
+    // L'eccezione viene considerata "gestita"
+  end;
+  *)
+end;
+
+
+// =================================================================
+// CHIUSURA - ordine corretto:
+//   1) FormCloseQuery  → chiedi conferma
+//   2) FormClose       → fermoa i monitor (Clear), poi il database
+//   3) FormDestroy     → libero le liste (già vuote)
+// =================================================================
+procedure TMainForm.FormClose(Sender: TObject; var Action: TCloseAction);
+begin
+
+   // Svuota la lista - gli oggetti vengono distrutti automaticamente
+  // perché la lista è stata creata con OwnsObjects=True
+  // cosi termino frame e vari task ma non risorse principali
+
+ // PASSO 1: Fermo tutti i monitor nei frame.
+  // Clear() chiama il destructor di ogni frame (perché owned=True),
+  // ogni frame nel suo destructor chiama Shutdown sul monitor.
+  // Dopo questa riga tutti i thread FTP sono fermati.
+  FFrameList.Clear;
+
+
+  // PASSO 2: Aspetta che tutti i thread finiscano
+  Sleep(1000);
+  Application.ProcessMessages;
+
+
+  // Chiudi connessione database
+  // PASSO 3: Solo ora chiudo il database.
+  // I monitor sono già fermati, nessun thread cercherà di usare la connessione.
+  if DMIConsole.FDConnection.Connected then
+  begin
+    try
+      DMIConsole.FDConnection.Connected := False;
+    except
+    end;
+  end;
+
+end;
+
+procedure TMainForm.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
+var
+  response: Integer;
+begin
+  // Chiedi conferma prima di chiudere se ci sono monitor attivi
+   if Assigned(FFrameList) and ( FFrameList.Count > 0 ) then
+  begin
+    response := MessageDlg(
+      'I monitor FTP sono ancora attivi. Vuoi fermarli e chiudere l''applicazione?',
+      mtConfirmation,
+      [mbYes, mbNo],
+      0
+    );
+
+    if response = mrYes then
+    begin
+      // Ferma tutti i monitor prima di chiudere
+   ///////// 03/02   StopAllMonitors;
+      CanClose := True;
+    end
+    else
+      CanClose := False;
+  end
+  else
+    CanClose := True;
+end;
+
+procedure TMainForm.FormDestroy(Sender: TObject);
+begin
+  // FFrameList è già stato svuotato in FormClose.
+  // Qui libero solo la lista stessa e gli altri oggetti.
+{  try
+    if DMIConsole.FDConnection.Connected then
+      DMIConsole.FDConnection.Connected := False;
+  except
+  end;
+ }
+
+  try
+    if assigned(FFrameList) then
+      FreeAndNil(FFrameList);
+  except
+    on E: Exception do
+      LogToFile('FormDestroy - Errore free frame list: ' + E.Message);
+  end;
+
+  try
+    if Assigned(FConfigManager) then
+      FreeAndNil(FConfigManager);
+  except
+    on E: Exception do
+      LogToFile('FormDestroy - Errore free config manager: ' + E.Message);
+  end;
+
+  LogToFile('Applicazione chiusa normalmente');
+end;
+
+end.
