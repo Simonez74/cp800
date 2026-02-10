@@ -126,14 +126,15 @@ end;
 destructor TWeightFtpMonitor.Destroy;
 begin
 
-  // Ferma e libera il timer
+  // 1. Fermo e libero il timer
   if Assigned(FPeriodoAggiuntivoTimer) then
   begin
+    FPeriodoAggiuntivoTimer.OnTimer := nil;
     FPeriodoAggiuntivoTimer.Enabled := False;
     FreeAndNil(FPeriodoAggiuntivoTimer);
   end;
 
-
+  // 2. Salvo ultimo ID
   // salvo ultimo ID prima di distruggere
   FStateLock.Enter;
   try
@@ -143,7 +144,11 @@ begin
     FStateLock.Leave;
   end;
 
-  FreeAndNil(FStateLock);
+  // 3. Libero FStateLock
+  if Assigned(FStateLock) then
+    FreeAndNil(FStateLock);
+
+  // 4. Chiamo inherited (che libera FStopEvent e FLock della classe base)
   inherited;
 end;
 

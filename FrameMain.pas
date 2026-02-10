@@ -550,30 +550,27 @@ begin
       FMonitor.Stop;
 
       // ASPETTO che il thread finisca DAVVERO
-      if FMonitor.AttendoCompletamento(2000) then
-      begin
-        FreeAndNil(FMonitor);
-        AddLog(Memo1, 'Monitor stopped cleanly');
-      end
+      if FMonitor.AttendoCompletamento(3000) then
+        AddLog(Memo1, 'Monitor stopped cleanly')
       else
-      begin
         // TIMEOUT: il thread non ha finito
-        AddLog(Memo1, 'ERROR: Monitor thread did not stop - MEMORY LEAK!');
+        AddLog(Memo1, 'Monitor timeout - will force cleanup');
 
-        // NON chiamare FreeAndNil!
-        // Lascio perdere il riferimento per evitare Access Violation
-        FMonitor := nil;  // Abbandona il riferimento
-
-        // NOTA: Questo causa un memory leak, ma è meglio di un crash!
-        // Il thread terminerà eventualmente da solo
-      end;
+      // SEMPRE chiamare FreeAndNil - questo libera FStopEvent sul destroy
+      FreeAndNil(FMonitor);
 
     except
       // loggare l'errore ???
       on E: Exception do
+      begin
         AddLog(Memo1, 'Shutdown error: ' + E.Message);
           // Log su debugger se disponibile
       //  OutputDebugString(PChar('Shutdown FMonitor error: ' + E.Message));
+
+        // SEMPRE chiamare FreeAndNil - questo libera FStopEvent sul destroy
+        if Assigned(FMonitor) then
+          FreeAndNil(FMonitor);
+      end;
     end;
   end;
 
@@ -584,26 +581,22 @@ begin
 
       // ASPETTO che il thread finisca DAVVERO
       if FMonitorWeight.AttendoCompletamento(2000) then
-      begin
-        FreeAndNil(FMonitorWeight);
-        AddLog(Memo1, ' Weight Monitor stopped cleanly');
-      end
+        AddLog(Memo1, ' Weight Monitor stopped cleanly')
       else
-      begin
        // TIMEOUT: il thread non ha finito
-        AddLog(Memo1, 'ERROR: Weight Monitor thread did not stop - MEMORY LEAK!');
-
-        // NON chiamare FreeAndNil!
-        // Lascio perdere il riferimento per evitare Access Violation
-        FMonitorWeight := nil;  // Abbandona il riferimento
-
-        // NOTA: Questo causa un memory leak, ma è meglio di un crash!
-        // Il thread terminerà eventualmente da solo
-      end;
+        AddLog(Memo1, 'Weight Monitor timeout - will force cleanup');
+      // SEMPRE chiamare FreeAndNil - questo libera FStopEvent sul destroy
+      FreeAndNil(FMonitorWeight);
     except
       on E: Exception do
+      begin
        AddLog(Memo1, 'Shutdown error: ' + E.Message);
 //        OutputDebugString(PChar('Shutdown FMonitorWeight error: ' + E.Message));
+
+       // SEMPRE chiamare FreeAndNil - questo libera FStopEvent sul destroy
+       if Assigned(FMonitorWeight) then
+          FreeAndNil(FMonitorWeight);
+      end;
     end;
   end;
   FIsRunning := False;

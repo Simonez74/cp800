@@ -306,8 +306,19 @@ destructor TFtpMonitor.Destroy;
 begin
   Stop;
 //  FreeAndNil(FLastValues);
-  FreeAndNil(FStopEvent);
-  FreeAndNil(FLock);
+
+  if Assigned(FStopEvent) then
+  begin
+    FreeAndNil(FStopEvent);
+    DoQueueLog('FStopEvent freed'); // Debug
+  end;
+
+  if Assigned(FLock) then
+  begin
+    FreeAndNil(FLock);
+    DoQueueLog('FLock freed'); // Debug
+  end;
+
   inherited;
 end;
 
@@ -370,9 +381,12 @@ end;
 procedure TFtpMonitor.Stop;
 var
   waited: Integer;
+  MaxWaitMs: Integer;
 begin
   if not Assigned(FThread) then
     Exit;
+
+  MaxWaitMs := 2000;
 
   // Segnala l'evento per svegliare immediatamente il thread se è in WaitFor
   // 1) Segnala l'evento: se il thread è in WaitFor(IntervalMs) esce subito
@@ -405,10 +419,12 @@ begin
   // Aspetta per un breve tempo (il thread dovrebbe uscire velocemente grazie all'evento);
   // non blocchiamo indefinitamente l'UI: attendiamo fino a un timeout ragionevole
   waited := 0;
-  while Assigned(FThread) and (not FThread.Finished) and (waited < 2000) do
+  while Assigned(FThread) and (not FThread.Finished) and (waited < MaxWaitMs) do
+   // and (waited < 2000) do
   begin
     Sleep(10);
     Inc(waited, 10);
+    Application.ProcessMessages; // Permetto al thread di completare
   end;
 
   // 4) Libero solo se il thread è effettivamente finito
