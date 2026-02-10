@@ -98,6 +98,7 @@ type
     FConfigManager: TConfigManager;
     FConfigVisible: Boolean;
     FDatabaseConnected: Boolean;
+    FIsClosing: Boolean;
 
     procedure ShowConnectionPanel(const AMessage: string; AShowRetry: Boolean = False);
     procedure HideConnectionPanel;
@@ -112,6 +113,7 @@ type
 
     procedure StopAllMonitors;
     procedure RestartAllMonitors;
+
   public
     { Public declarations }
     procedure RefreshAll;
@@ -139,6 +141,7 @@ implementation
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
   FDatabaseConnected := False;
+  FIsClosing := False;
 
   // Creo il ConfigManager
   FConfigManager := TConfigManager.Create;
@@ -191,7 +194,6 @@ begin
     MemoConnectionError.Lines.Clear;
 end;
 
-
 procedure TMainForm.StopAllMonitors;
 var
 //  frame: TFFtpServer;
@@ -239,9 +241,9 @@ begin
     if ErrorCount > 0 then
       ShowMessage(Format('Attention: %d monitors generated errors during shutdown.' +
                          sLineBreak + 'See log for details.',
-                         [ErrorCount]))
-    else
-      ShowMessage('Tutti i monitor sono stati fermati correttamente.');
+                         [ErrorCount]));
+//    else
+//      ShowMessage('Tutti i monitor sono stati fermati correttamente.');
 
 
   finally
@@ -378,8 +380,8 @@ begin
       TabSheet.Color:= $00FCE7BE;
 
 //      FFrame := TFrameCp800.Create(TabSheet,  QAppo.FieldByName('cp800_id').asstring);
-//      FFrame := TFFtpServer.Create( TabSheet );
-      FFrame := TFrameCp800.Create( TabSheet );
+//      FFrame := TFrameCp800.Create( TabSheet );
+      FFrame := TFrameCp800.Create( nil );
       FFrame.Align := alClient;
       FFrame.Parent := TabSheet;
       fframe.Name := Format('ServerFrame_%d', [FFrameList.Count + 1]);
@@ -852,6 +854,7 @@ end;
 procedure TMainForm.ApplicationEvents1Exception(Sender: TObject; E: Exception);
 var
   ErrorMsg: string;
+  IsShutdownException: Boolean;
 //  IsCritical: Boolean;
 begin
   // ═══════════════════════════════════════════════════════════
@@ -863,6 +866,29 @@ begin
   except
     // Se anche il log fallisce, ignoro
   end;
+
+  // Durante la chiusura dell'app, evita popup/gestioni rumorose su eccezioni note.
+  IsShutdownException :=
+    Application.Terminated or
+    FIsClosing or
+    (csDestroying in ComponentState);
+
+  if IsShutdownException and
+     ((E is EAccessViolation) or
+      (E is EInvalidPointer) or
+      (E.Message.Contains('canvas')) or
+      (E.Message.Contains('destroyed')) or
+      (E.Message.Contains('cannot focus')))  then
+  begin
+    try
+      LogToFile('Eccezione ignorata durante chiusura applicazione: ' + ErrorMsg);
+    except
+    end;
+    Exit;
+  end;
+
+
+
     // Mostra un messaggio di errore all'utente
  { try
     MessageBox(Application.Handle,
@@ -985,21 +1011,50 @@ end;
 // =================================================================
 procedure TMainForm.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
+  FIsClosing := True;
+
+
+  // PASSO 1: fermo esplicitamente i monitor prima di chiudere il DB.
+  try
+    StopAllMonitors;
+  except
+    on E: Exception do
+      LogToFile('FormClose - Errore durante StopAllMonitors: ' + E.Message);
+  end;
+
+
+
 
    // Svuota la lista - gli oggetti vengono distrutti automaticamente
   // perché la lista è stata creata con OwnsObjects=True
   // cosi termino frame e vari task ma non risorse principali
 
- // PASSO 1: Fermo tutti i monitor nei frame.
+ // PASSO 2: Fermo tutti i monitor nei frame.
   // Clear() chiama il destructor di ogni frame (perché owned=True),
   // ogni frame nel suo destructor chiama Shutdown sul monitor.
   // Dopo questa riga tutti i thread FTP sono fermati.
-  FFrameList.Clear;
+//  FFrameList.Clear;
+  if Assigned(FFrameList) then
+  begin
+    try
+      FFrameList.Clear;
+    except
+      on E: Exception do
+        LogToFile('FormClose - Errore durante FormClose -> clear frame list: ' + E.Message);
+    end;
+  end;
+
+  // PASSO 3: ora libero le tab (a questo punto i frame non ci sono più).
+  try
+    while MainPageControl.PageCount > 0 do
+      MainPageControl.Pages[0].Free;
+  except
+    on E: Exception do
+      LogToFile('FormClose - Errore durante clear tab pages: ' + E.Message);
+  end;
 
 
-  // PASSO 2: Aspetta che tutti i thread finiscano
-  Sleep(1000);
-  Application.ProcessMessages;
+
 
 
   // Chiudi connessione database
@@ -1034,12 +1089,19 @@ begin
       // Ferma tutti i monitor prima di chiudere
    ///////// 03/02   StopAllMonitors;
       CanClose := True;
+      FIsClosing := True;
     end
     else
+    begin
       CanClose := False;
+     FIsClosing := False;
+    end;
   end
   else
+  begin
     CanClose := True;
+    FIsClosing := True;
+  end;
 end;
 
 procedure TMainForm.FormDestroy(Sender: TObject);

@@ -1,10 +1,10 @@
 object FrameCp800: TFrameCp800
   Left = 0
   Top = 0
-  Width = 878
-  Height = 515
-  Constraints.MinHeight = 431
-  Constraints.MinWidth = 712
+  Width = 760
+  Height = 510
+  Constraints.MinHeight = 510
+  Constraints.MinWidth = 700
   Color = clBtnFace
   ParentBackground = False
   ParentColor = False
@@ -12,23 +12,25 @@ object FrameCp800: TFrameCp800
   object ScrollBox1: TScrollBox
     Left = 100
     Top = 0
-    Width = 778
-    Height = 515
+    Width = 660
+    Height = 510
     Align = alClient
     Color = 16574398
     ParentColor = False
     TabOrder = 0
+    ExplicitWidth = 778
     ExplicitHeight = 477
     object PanelMenu: TPanel
       Left = 0
       Top = 0
-      Width = 774
+      Width = 656
       Height = 22
       Align = alTop
       BevelOuter = bvNone
       Color = 16574398
       ParentBackground = False
       TabOrder = 0
+      ExplicitWidth = 774
       object VirtualImage2: TVirtualImage
         Left = 4
         Top = 3
@@ -45,29 +47,31 @@ object FrameCp800: TFrameCp800
     object CardPanel1: TCardPanel
       Left = 0
       Top = 22
-      Width = 774
-      Height = 489
+      Width = 656
+      Height = 484
       Align = alClient
       ActiveCard = CardDati
       Caption = 'CardPanel1'
       Color = 16574398
       ParentBackground = False
       TabOrder = 1
+      ExplicitWidth = 774
       ExplicitHeight = 451
       object CardAltriDati: TCard
         Left = 1
         Top = 1
-        Width = 772
-        Height = 487
+        Width = 654
+        Height = 482
         Caption = 'Altri Dati'
         CardIndex = 0
         ParentColor = True
         TabOrder = 0
+        ExplicitWidth = 772
         ExplicitHeight = 449
         object Splitter1: TSplitter
           Left = 0
           Top = 229
-          Width = 772
+          Width = 654
           Height = 3
           Cursor = crVSplit
           Align = alTop
@@ -75,8 +79,8 @@ object FrameCp800: TFrameCp800
         end
         object Splitter2: TSplitter
           Left = 0
-          Top = 484
-          Width = 772
+          Top = 479
+          Width = 654
           Height = 3
           Cursor = crVSplit
           Align = alBottom
@@ -86,42 +90,45 @@ object FrameCp800: TFrameCp800
         object Memo1: TMemo
           Left = 0
           Top = 0
-          Width = 772
+          Width = 654
           Height = 229
           Align = alTop
           Lines.Strings = (
             '')
           ScrollBars = ssVertical
           TabOrder = 0
+          ExplicitWidth = 772
         end
         object MemoProd: TMemo
           Left = 0
           Top = 232
-          Width = 772
-          Height = 252
+          Width = 654
+          Height = 247
           Align = alClient
           Lines.Strings = (
             '')
           ReadOnly = True
           ScrollBars = ssVertical
           TabOrder = 1
+          ExplicitWidth = 772
           ExplicitHeight = 214
         end
       end
       object CardDati: TCard
         Left = 1
         Top = 1
-        Width = 772
-        Height = 487
+        Width = 654
+        Height = 482
         Caption = 'CardDati'
         CardIndex = 1
         ParentColor = True
         TabOrder = 1
+        ExplicitWidth = 772
         ExplicitHeight = 449
         object StatusBar: TStatusBar
           Left = 0
-          Top = 468
-          Width = 772
+          Top = 463
+          Width = 654
           Height = 19
           Panels = <
             item
@@ -131,12 +138,13 @@ object FrameCp800: TFrameCp800
               Width = 50
             end>
           ExplicitTop = 430
+          ExplicitWidth = 772
         end
         object Panel6: TPanel
           Left = 0
           Top = 0
-          Width = 772
-          Height = 468
+          Width = 654
+          Height = 463
           Align = alClient
           BevelOuter = bvNone
           Color = 16574398
@@ -150,6 +158,7 @@ object FrameCp800: TFrameCp800
           TabOrder = 1
           ExplicitLeft = -2
           ExplicitTop = 4
+          ExplicitWidth = 772
           ExplicitHeight = 430
           object LabelProgramNo: TLabel
             Left = 14
@@ -240,8 +249,8 @@ object FrameCp800: TFrameCp800
             Transparent = False
           end
           object LabelStatus: TLabel
-            Left = 20
-            Top = 324
+            Left = 16
+            Top = 338
             Width = 28
             Height = 13
             Caption = 'State'
@@ -8122,16 +8131,6 @@ object FrameCp800: TFrameCp800
             Proportional = True
             Stretch = True
           end
-          object lbl5001: TSimonLabel
-            Tag = 1
-            Left = 20
-            Top = 373
-            Width = 56
-            Height = 21
-            Caption = 'lbl5001'
-            Visible = False
-            OnCaptionChange = lbl5001CaptionChange
-          end
           object lbl1102: TSimonLabel
             Tag = 1
             Left = 120
@@ -8421,16 +8420,16 @@ object FrameCp800: TFrameCp800
             Layout = tlCenter
           end
           object LabelTime: TLabel
-            Left = 589
-            Top = 36
+            Left = 496
+            Top = 100
             Width = 50
             Height = 21
             Caption = 'Label1'
           end
           object lbl2008: TSimonLabel
             Tag = 1
-            Left = 608
-            Top = 102
+            Left = 552
+            Top = 106
             Width = 56
             Height = 21
             Caption = 'lbl2008'
@@ -8840,9 +8839,73 @@ object FrameCp800: TFrameCp800
             Transparent = False
             Layout = tlCenter
           end
+          object Bevel1: TBevel
+            Left = 0
+            Top = 413
+            Width = 654
+            Height = 50
+            Align = alBottom
+            Shape = bsFrame
+            ExplicitLeft = 148
+            ExplicitTop = 343
+            ExplicitWidth = 234
+          end
+          object lbl5001: TSimonLabel
+            Tag = 1
+            Left = 206
+            Top = 352
+            Width = 56
+            Height = 21
+            Caption = 'lbl5001'
+            Visible = False
+            OnCaptionChange = lbl5001CaptionChange
+          end
+          object lbl9001: TLabel
+            Tag = 1
+            Left = 14
+            Top = 420
+            Width = 626
+            Height = 28
+            AutoSize = False
+            Caption = 'lbl9001'
+            Color = 3795522
+            Font.Charset = ANSI_CHARSET
+            Font.Color = clWindowText
+            Font.Height = -27
+            Font.Name = 'Arial'
+            Font.Style = [fsBold]
+            ParentColor = False
+            ParentFont = False
+            Transparent = False
+          end
+          object Bevel2: TBevel
+            Left = 0
+            Top = 168
+            Width = 654
+            Height = 245
+            Align = alClient
+            ExplicitTop = 0
+            ExplicitHeight = 84
+          end
+          object Bevel3: TBevel
+            Left = 0
+            Top = 84
+            Width = 654
+            Height = 84
+            Align = alTop
+            ExplicitTop = 4
+          end
+          object Bevel4: TBevel
+            Left = 0
+            Top = 0
+            Width = 654
+            Height = 84
+            Align = alTop
+            ExplicitTop = 4
+          end
           object BtnStop: TButton
-            Left = 660
-            Top = 5
+            Left = 115
+            Top = 359
             Width = 75
             Height = 20
             Caption = 'Stop'
@@ -8850,100 +8913,36 @@ object FrameCp800: TFrameCp800
             OnClick = BtnStopClick
           end
           object BtnStart: TButton
-            Left = 508
-            Top = 5
+            Left = 34
+            Top = 357
             Width = 75
             Height = 25
             Caption = 'Start'
             TabOrder = 1
             OnClick = BtnStartClick
           end
-          object BtnStop3: TButton
-            Left = 608
-            Top = 371
-            Width = 75
-            Height = 25
-            Caption = 'BtnStop3'
-            TabOrder = 2
-            OnClick = BtnStop3Click
-          end
-          object Panel1: TPanel
-            Left = 553
-            Top = 124
-            Width = 185
-            Height = 41
-            Caption = 'Panel1'
-            Color = 16574398
-            ParentBackground = False
-            TabOrder = 3
-          end
-          object GroupBox1: TGroupBox
-            Left = 0
-            Top = 400
-            Width = 772
-            Height = 68
-            Align = alBottom
-            Caption = 'State'
-            Color = 16574398
-            Ctl3D = True
-            Font.Charset = ANSI_CHARSET
-            Font.Color = clWindowText
-            Font.Height = -16
-            Font.Name = 'Arial'
-            Font.Style = [fsBold]
-            ParentBackground = False
-            ParentColor = False
-            ParentCtl3D = False
-            ParentFont = False
-            TabOrder = 4
-            object lbl9001: TLabel
-              Tag = 1
-              Left = 20
-              Top = 24
-              Width = 626
-              Height = 28
-              AutoSize = False
-              Caption = 'lbl9001'
-              Color = 3795522
-              Font.Charset = ANSI_CHARSET
-              Font.Color = clWindowText
-              Font.Height = -27
-              Font.Name = 'Arial'
-              Font.Style = [fsBold]
-              ParentColor = False
-              ParentFont = False
-              Transparent = False
-            end
-          end
-        end
-        object BtnStart3: TButton
-          Left = 522
-          Top = 373
-          Width = 75
-          Height = 25
-          Caption = 'BtnStart3'
-          TabOrder = 2
-          OnClick = BtnStart3Click
         end
       end
       object CardStorico: TCard
         Left = 1
         Top = 1
-        Width = 772
-        Height = 487
+        Width = 654
+        Height = 482
         Caption = 'CardStorico'
         CardIndex = 2
         ParentColor = True
         TabOrder = 2
+        ExplicitWidth = 772
         ExplicitHeight = 449
         object Panel5: TPanel
           Left = 0
           Top = 0
-          Width = 772
+          Width = 654
           Height = 41
           Align = alTop
           ParentColor = True
           TabOrder = 0
+          ExplicitWidth = 772
           object Label1: TLabel
             Left = -2
             Top = 10
@@ -9001,20 +9000,21 @@ object FrameCp800: TFrameCp800
         end
         object DBNavigator2: TDBNavigator
           Left = 0
-          Top = 462
-          Width = 772
+          Top = 457
+          Width = 654
           Height = 25
           DataSource = DsStorico
           VisibleButtons = [nbFirst, nbPrior, nbNext, nbLast, nbRefresh]
           Align = alBottom
           TabOrder = 1
           ExplicitTop = 424
+          ExplicitWidth = 772
         end
         object DBGridStorico: TDBGrid
           Left = 0
           Top = 41
-          Width = 772
-          Height = 421
+          Width = 654
+          Height = 416
           Align = alClient
           Color = 16574398
           DataSource = DsStorico
@@ -9106,7 +9106,7 @@ object FrameCp800: TFrameCp800
     Left = 0
     Top = 0
     Width = 100
-    Height = 515
+    Height = 510
     BevelKind = bkTile
     Color = 16574398
     CompactWidth = 0
@@ -9213,7 +9213,7 @@ object FrameCp800: TFrameCp800
     ImageCollection = ImageCollection1
     Width = 32
     Height = 32
-    Left = 512
+    Left = 384
     Top = 395
   end
   object ImageCollection1: TImageCollection
@@ -13079,13 +13079,13 @@ object FrameCp800: TFrameCp800
               355AAD93000059FD85C5AAC505D80000000049454E44AE426082}
           end>
       end>
-    Left = 752
-    Top = 63
+    Left = 36
+    Top = 195
   end
   object DsStorico: TDataSource
     DataSet = QStorico
-    Left = 668
-    Top = 259
+    Left = 560
+    Top = 379
   end
   object QStorico: TFDQuery
     Connection = DMIConsole.FDConnection
@@ -13131,7 +13131,7 @@ object FrameCp800: TFrameCp800
         'as WeightMin '
       '  from cp800Storico S'
       '  group by NumProgram')
-    Left = 760
-    Top = 252
+    Left = 500
+    Top = 376
   end
 end

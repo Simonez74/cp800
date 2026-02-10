@@ -659,29 +659,6 @@ begin
       *)
 end;
 
-
-{
-procedure TFtpMonitor.SetWatchKeys(const Value: TArray<string>);
-begin
-FLock.Enter;
-  try
-    FWatchKeys := Copy(Value, 0, Length(Value));
-  finally
-    FLock.Leave;
-  end;
-end;
-
-
-function TFtpMonitor.GetWatchKeys: TArray<string>;
-begin
-   FLock.Enter;
-  try
-    Result := Copy(FWatchKeys, 0, Length(FWatchKeys));
-  finally
-    FLock.Leave;
-  end;
-end;
-}
 procedure TFtpMonitor.OnFTPStatus(ASender: TObject; const AStatus: TIdStatus; const AStatusText: string);
 begin
   if assigned (FStatusEvent) then

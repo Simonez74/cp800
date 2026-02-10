@@ -3,7 +3,7 @@ object MainForm: TMainForm
   Top = 0
   Caption = 'CP800 Console'
   ClientHeight = 541
-  ClientWidth = 861
+  ClientWidth = 678
   Color = 16574398
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -19,17 +19,18 @@ object MainForm: TMainForm
   object PanelTop: TPanel
     Left = 0
     Top = 0
-    Width = 861
+    Width = 678
     Height = 28
     Align = alTop
     BevelOuter = bvNone
     ParentBackground = False
     ShowCaption = False
     TabOrder = 0
+    ExplicitWidth = 861
     object ToolBar1: TToolBar
       Left = 0
       Top = 0
-      Width = 861
+      Width = 678
       Height = 26
       ButtonHeight = 25
       ButtonWidth = 39
@@ -37,6 +38,7 @@ object MainForm: TMainForm
       Images = ImageList1
       List = True
       TabOrder = 0
+      ExplicitWidth = 861
       object ToolButtonConfig: TToolButton
         Left = 0
         Top = 0
@@ -89,7 +91,7 @@ object MainForm: TMainForm
     end
   end
   object PanelConfig: TPanel
-    Left = 568
+    Left = 385
     Top = 28
     Width = 293
     Height = 494
@@ -99,22 +101,25 @@ object MainForm: TMainForm
     ParentBackground = False
     TabOrder = 1
     Visible = False
+    ExplicitLeft = 568
   end
   object PanelMain: TPanel
     Left = 0
     Top = 28
-    Width = 568
+    Width = 385
     Height = 494
     Align = alClient
     BevelOuter = bvNone
     TabOrder = 2
+    ExplicitWidth = 568
     object MainPageControl: TPageControl
       Left = 0
       Top = 0
-      Width = 568
+      Width = 385
       Height = 494
       Align = alClient
       TabOrder = 0
+      ExplicitWidth = 568
     end
     object PanelConnection: TPanel
       Left = 198
@@ -193,7 +198,7 @@ object MainForm: TMainForm
   object StatusBar1: TStatusBar
     Left = 0
     Top = 522
-    Width = 861
+    Width = 678
     Height = 19
     Panels = <
       item
@@ -208,6 +213,7 @@ object MainForm: TMainForm
       item
         Width = 50
       end>
+    ExplicitWidth = 861
   end
   object ApplicationEvents1: TApplicationEvents
     OnException = ApplicationEvents1Exception

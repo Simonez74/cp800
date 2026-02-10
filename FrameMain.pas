@@ -120,7 +120,6 @@ type
     BtnStorico: TButton;
     DsStorico: TDataSource;
     QStorico: TFDQuery;
-    lbl5001: TSimonLabel;
     DateTimeStorico: TDateTimePicker;
     cbDescrProgram: TComboBox;
     CbSessionId: TComboBox;
@@ -148,8 +147,6 @@ type
     lbl4005: TLabel;
     lbl4006: TLabel;
     LabelTime: TLabel;
-    BtnStart3: TButton;
-    BtnStop3: TButton;
     lbl2008: TSimonLabel;
     LblBelt: TLabel;
     LblBeltA: TLabel;
@@ -172,10 +169,13 @@ type
     LblWeightC: TLabel;
     LblWeightD: TLabel;
     LblWeightB: TLabel;
-    Panel1: TPanel;
     lblTotSpeed: TLabel;
-    GroupBox1: TGroupBox;
+    Bevel1: TBevel;
+    lbl5001: TSimonLabel;
     lbl9001: TLabel;
+    Bevel2: TBevel;
+    Bevel3: TBevel;
+    Bevel4: TBevel;
     procedure BtnDatiClick(Sender: TObject);
     procedure VirtualImage2Click(Sender: TObject);
     procedure lbl5001CaptionChange(Sender: TObject; const NewCaption: string);
@@ -186,8 +186,6 @@ type
       State: TGridDrawState);
     procedure BtnStartClick(Sender: TObject);
     procedure BtnStopClick(Sender: TObject);
-    procedure BtnStart3Click(Sender: TObject);
-    procedure BtnStop3Click(Sender: TObject);
   private
 
     //scarica un file FTP con coppie key=value e aggiorna le label sul frame
@@ -208,6 +206,7 @@ type
 
 
     FIsRunning: Boolean;
+    FIsShuttingDown: Boolean;
     FServerCfg : TServerConfig;
 
 //    FWeightPath : String;
@@ -289,8 +288,7 @@ begin
   Shutdown;
 
  // Elabora eventuali messaggi residui
-  Sleep(50);
-  Application.ProcessMessages;
+
 
   if assigned(FLabelMap) then
     FreeAndNil(FLabelMap);
@@ -429,8 +427,6 @@ begin
   end;
   FMonitorWeight.Start;
 //  FIsRunningWeight := True;
-  BtnStart3.Enabled := False;
-  BtnStop3.Enabled := True;
   AddLog(MemoProd, 'Weight Monitor force-started');
 end;
 
@@ -503,10 +499,7 @@ begin
         AddLog(MemoProd, 'Error stopping Weight Monitor: ' + E.Message);
     end;
   end;
-
 //  FIsRunningWeight := False;
-  BtnStart3.Enabled := True;
-  BtnStop3.Enabled := False;
 end;
 
 procedure TFrameCp800.AggiornaCondizioniLog;
@@ -632,25 +625,15 @@ begin
   end
 end;
 
-procedure TFrameCp800.BtnStart3Click(Sender: TObject);
-begin
- StartWeightMonitor;
-end;
-
 procedure TFrameCp800.BtnStartClick(Sender: TObject);
 begin
   start;
 end;
 
-procedure TFrameCp800.BtnStop3Click(Sender: TObject);
-begin
-  StopWeightMonitor;
-end;
-
 procedure TFrameCp800.BtnStopClick(Sender: TObject);
 begin
-//  Shutdown;
-  stop;
+  Shutdown;
+//  stop;
 end;
 
 
@@ -1062,8 +1045,8 @@ begin
 end;
 
 procedure TFrameCp800.MonitorWeight(Sender: TObject; const WeightData: TWeightRecord);
-var
-  DisplayText: string;
+//var
+//  DisplayText: string;
 begin
   // Aggiorna label con ultimo peso ricevuto
 {  DisplayText := Format('ID: %s | Channel %s: %s kg | Time: %s', [
