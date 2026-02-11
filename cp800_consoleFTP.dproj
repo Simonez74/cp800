@@ -147,23 +147,21 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
+        <DCCReference Include="FastMM4.pas"/>
+        <DCCReference Include="FastMM4Messages.pas"/>
         <DCCReference Include="Forms.Main.pas">
             <Form>MainForm</Form>
-            <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="DMI_Console.pas">
             <Form>DMIConsole</Form>
-            <FormType>dfm</FormType>
             <DesignClass>TDataModule</DesignClass>
         </DCCReference>
         <DCCReference Include="FrameMain.pas">
             <Form>FrameCp800</Form>
-            <FormType>dfm</FormType>
             <DesignClass>TFrame</DesignClass>
         </DCCReference>
         <DCCReference Include="Frame.Configuration.pas">
             <Form>FrameConfiguration</Form>
-            <FormType>dfm</FormType>
             <DesignClass>TFrame</DesignClass>
         </DCCReference>
         <DCCReference Include="ConfigManager.pas"/>

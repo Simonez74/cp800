@@ -33,8 +33,8 @@
     <Transaction>2025/01/30 15:51:49.000.069,V:\DelphiSorma\KeyLicence\cryptdecrypt.pas=V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\Unit1.pas</Transaction>
     <Transaction>2025/01/30 16:35:04.000.113,V:\DelphiSorma\KeyLicence\cryptdecrypt.pas=</Transaction>
     <Transaction>2025/01/30 17:12:05.000.412,=V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\Unit2.pas</Transaction>
-    <Transaction>2025/01/30 17:13:33.000.817,V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-ConfigFTP\Form.ConfigConsoleFTP.dfm=V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\Unit2.dfm</Transaction>
     <Transaction>2025/01/30 17:13:33.000.817,V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-ConfigFTP\Form.ConfigConsoleFTP.pas=V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\Unit2.pas</Transaction>
+    <Transaction>2025/01/30 17:13:33.000.817,V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-ConfigFTP\Form.ConfigConsoleFTP.dfm=V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\Unit2.dfm</Transaction>
     <Transaction>2025/01/30 17:19:57.000.096,=V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\PassWord.pas</Transaction>
     <Transaction>2025/01/30 17:20:40.000.096,V:\DelphiSorma\Common\DlgPassWord.pas=V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\PassWord.pas</Transaction>
     <Transaction>2025/01/30 17:20:40.000.096,V:\DelphiSorma\Common\DlgPassWord.dfm=V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\PassWord.dfm</Transaction>
@@ -42,11 +42,11 @@
     <Transaction>2025/02/10 13:01:35.000.771,=V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\Unit1.pas</Transaction>
     <Transaction>2025/02/10 13:02:29.000.932,V:\DelphiSorma\Common\Myfunc.Database.pas=V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\Unit1.pas</Transaction>
     <Transaction>2025/02/13 15:20:41.000.019,=V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\Unit1.pas</Transaction>
-    <Transaction>2025/02/13 16:17:11.000.586,V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\Unit1.pas=V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\Forms.SetValue.pas</Transaction>
     <Transaction>2025/02/13 16:17:11.000.586,V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\Unit1.dfm=V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\Forms.SetValue.dfm</Transaction>
+    <Transaction>2025/02/13 16:17:11.000.586,V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\Unit1.pas=V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\Forms.SetValue.pas</Transaction>
     <Transaction>2025/02/13 16:57:57.000.460,=V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\Unit1.pas</Transaction>
-    <Transaction>2025/02/13 16:58:48.000.846,V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\Unit1.dfm=V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\Forms.Storico.dfm</Transaction>
     <Transaction>2025/02/13 16:58:48.000.846,V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\Unit1.pas=V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\Forms.Storico.pas</Transaction>
+    <Transaction>2025/02/13 16:58:48.000.846,V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\Unit1.dfm=V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\Forms.Storico.dfm</Transaction>
     <Transaction>2025/02/19 09:31:10.000.783,=V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\Unit1.pas</Transaction>
     <Transaction>2025/02/19 09:31:26.000.907,V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\TaskManager.pas=V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\Unit1.pas</Transaction>
     <Transaction>2025/04/15 08:20:47.000.935,=V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\Unit1.pas</Transaction>
@@ -62,8 +62,8 @@
     <Transaction>2025/05/06 13:09:31.000.480,=V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\LanguageManagers.pas</Transaction>
     <Transaction>2025/05/06 15:07:51.000.980,=c:\program files (x86)\embarcadero\studio\23.0\ObjRepos\EN\DelphiWin32\OKCANCL1.PAS</Transaction>
     <Transaction>2025/05/06 15:07:52.000.396,=V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\OKCNHLP1.pas</Transaction>
-    <Transaction>2025/05/06 15:11:09.000.028,V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\Form.ConfirmDialog.pas=V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\OKCNHLP1.pas</Transaction>
     <Transaction>2025/05/06 15:11:09.000.028,V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\Form.ConfirmDialog.dfm=V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\OKCNHLP1.dfm</Transaction>
+    <Transaction>2025/05/06 15:11:09.000.028,V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\Form.ConfirmDialog.pas=V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\OKCNHLP1.pas</Transaction>
     <Transaction>2025/05/06 15:18:04.000.166,V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\Form.ConfirmDialog.pas=</Transaction>
     <Transaction>2025/05/06 15:20:55.000.683,=V:\DelphiSorma\Common\DlgConfirmDialog.pas</Transaction>
     <Transaction>2025/05/06 16:25:42.000.718,=V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\Unit1.pas</Transaction>
@@ -72,8 +72,8 @@
     <Transaction>2025/05/06 16:28:54.000.662,V:\DelphiSorma\Common\DlgConfirmDialog2.dfm=V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\Unit1.dfm</Transaction>
     <Transaction>2025/05/06 16:28:54.000.662,V:\DelphiSorma\Common\DlgConfirmDialog2.pas=V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\Unit1.pas</Transaction>
     <Transaction>2025/05/06 16:48:28.000.170,=V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\Unit1.pas</Transaction>
-    <Transaction>2025/05/06 16:58:17.000.753,V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\Unit1.dfm=V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\Frame.SetValue.dfm</Transaction>
     <Transaction>2025/05/06 16:58:17.000.753,V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\Unit1.pas=V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\Frame.SetValue.pas</Transaction>
+    <Transaction>2025/05/06 16:58:17.000.753,V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\Unit1.dfm=V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\Frame.SetValue.dfm</Transaction>
     <Transaction>2025/05/07 17:02:03.000.082,V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\Forms.SetValue.pas=</Transaction>
     <Transaction>2025/05/13 12:36:21.000.252,V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\FTPFileReader.pas=</Transaction>
     <Transaction>2025/05/20 16:32:28.000.676,=V:\DelphiSorma\CentroStella\Moduli\Kullmann\CP800-UDP-Console_FTP\FtpTask.pas</Transaction>
@@ -119,6 +119,8 @@
     <Transaction>2026/02/06 10:04:47.000.958,=V:\DelphiSorma\Cp800\CP800-UDP-Console_FTP\Unit1.pas</Transaction>
     <Transaction>2026/02/06 10:04:58.000.895,V:\DelphiSorma\Common\funzioni.pas=V:\DelphiSorma\Cp800\CP800-UDP-Console_FTP\Unit1.pas</Transaction>
     <Transaction>2026/02/06 10:09:32.000.133,V:\DelphiSorma\Common\Myfunc.Utils.pas=</Transaction>
+    <Transaction>2026/02/11 15:33:26.000.115,=V:\DelphiSorma\Cp800\CP800-UDP-Console_FTP\FastMM4.pas</Transaction>
+    <Transaction>2026/02/11 15:33:26.000.142,=V:\DelphiSorma\Cp800\CP800-UDP-Console_FTP\FastMM4Messages.pas</Transaction>
   </Transactions>
 	<ProjectSortOrder AutoSort="0" SortType="0">
     <File Path="V:\DelphiSorma"/>
@@ -137,5 +139,7 @@
     <File Path="UnitFtpMonitor.pas"/>
     <File Path="TypeUnit.pas"/>
     <File Path="UnitFtpMonitor.WeightData.pas"/>
+    <File Path="FastMM4.pas"/>
+    <File Path="FastMM4Messages.pas"/>
   </ProjectSortOrder>
 </BorlandProject>

@@ -247,7 +247,7 @@ type
     destructor Destroy; override;
     procedure Configure(Const AServerCfg : TServerConfig );
     procedure Start;
-    procedure Stop;
+//    procedure Stop;
     procedure Shutdown;
 
     property IsRunning: Boolean read FIsRunning;
@@ -318,31 +318,44 @@ end;
 procedure TFrameCp800.AddLog(Amemo : Tmemo;const Msg: string);
 begin
   // Se il frame è in fase di distruzione, non loggare
-  if csDestroying in ComponentState then
+//  if csDestroying in ComponentState then
+//    Exit;
+  // Evita log durante shutdown
+  if FIsShuttingDown then
     Exit;
 
- // Thread-safe logging con TThread.Queue
-  TThread.Queue(nil,
-    procedure
-    begin
-//      if Assigned(AMemo) then
-      // Doppio check: il memo potrebbe essere stato distrutto nel frattempo
-      if Assigned(AMemo) and not (csDestroying in AMemo.ComponentState) then
+  try
+    // Thread-safe logging con TThread.Queue
+    TThread.Queue(nil,
+      procedure
+      var
+        LogMsg : string;
       begin
-        try
-          AMemo.Lines.Add(Format('[%s] %s',
-            [FormatDateTime('hh:nn:ss', Now), Msg]));
+        if not assigned(amemo) then
+          exit;
 
-          // Auto-scroll all'ultima riga
-          AMemo.SelStart := Length(AMemo.Text);
-          AMemo.Perform(EM_SCROLLCARET, 0, 0);
-          if AMemo.Lines.Count > 1000 then
-            AMemo.Lines.Delete(0);
-         except
-          // Ignora errori durante logging se il memo è in destroy
+
+        // Doppio check: il memo potrebbe essere stato distrutto nel frattempo
+        if Assigned(AMemo) and not (csDestroying in AMemo.ComponentState) then
+        begin
+          try
+            LogMsg := (Format('[%s] %s',
+              [FormatDateTime('hh:nn:ss', Now), Msg]));
+            AMemo.Lines.Add(LogMsg);
+
+            // Auto-scroll all'ultima riga
+            AMemo.SelStart := Length(AMemo.Text);
+            AMemo.Perform(EM_SCROLLCARET, 0, 0);
+            if AMemo.Lines.Count > 1000 then
+              AMemo.Lines.Delete(0);
+           except
+            // Ignoro errori durante logging se il memo è in destroy
+          end;
         end;
-      end;
-    end);
+      end);
+  except
+    // Ignoro anche errori di Queue
+  end;
 end;
 
 
@@ -408,7 +421,7 @@ begin
   // tramite ApplyStateChange ? Start.
   AddLog(MemoProd, 'Weight Monitor initialised (waiting for program data...)');
 end;
-
+       {
 procedure TFrameCp800.Stop;
 begin
   if not Assigned(FMonitor) then
@@ -456,6 +469,7 @@ begin
   if Assigned(BtnStop) then
     BtnStop.Enabled := False;
 end;
+}
 
 procedure TFrameCp800.AggiornaCondizioniLog;
 begin
@@ -496,29 +510,29 @@ begin
   if Assigned(FMonitor) then
   begin
     try
-      FMonitor.Stop;
+      try
+        FMonitor.Stop;
 
-      // ASPETTO che il thread finisca DAVVERO
-      if FMonitor.AttendoCompletamento(3000) then
-        AddLog(Memo1, 'Monitor stopped cleanly')
-      else
-        // TIMEOUT: il thread non ha finito
-        AddLog(Memo1, 'Monitor timeout - will force cleanup');
-
-      // SEMPRE chiamare FreeAndNil - questo libera FStopEvent sul destroy
-      FreeAndNil(FMonitor);
-
-    except
-      // loggare l'errore ???
-      on E: Exception do
-      begin
-        AddLog(Memo1, 'Shutdown error: ' + E.Message);
+        // ASPETTO che il thread finisca DAVVERO
+        if FMonitor.AttendoCompletamento(3000) then
+          AddLog(Memo1, 'Monitor stopped cleanly')
+        else
+          // TIMEOUT: il thread non ha finito
+          AddLog(Memo1, 'Monitor timeout - will force cleanup');
+      except
+        on E: Exception do
+        begin
+          AddLog(Memo1, 'Shutdown error: ' + E.Message);
           // Log su debugger se disponibile
       //  OutputDebugString(PChar('Shutdown FMonitor error: ' + E.Message));
-
+        end;
+      end;
+    finally
+      try
         // SEMPRE chiamare FreeAndNil - questo libera FStopEvent sul destroy
         if Assigned(FMonitor) then
           FreeAndNil(FMonitor);
+      except
       end;
     end;
   end;
@@ -526,27 +540,33 @@ begin
   if Assigned(FMonitorWeight) then
   begin
     try
-      FMonitorWeight.Stop;
+      try
+        FMonitorWeight.Stop;
 
-      // ASPETTO che il thread finisca DAVVERO
-      if FMonitorWeight.AttendoCompletamento(2000) then
-        AddLog(Memo1, ' Weight Monitor stopped cleanly')
-      else
-       // TIMEOUT: il thread non ha finito
-        AddLog(Memo1, 'Weight Monitor timeout - will force cleanup');
-      // SEMPRE chiamare FreeAndNil - questo libera FStopEvent sul destroy
-      FreeAndNil(FMonitorWeight);
-    except
-      on E: Exception do
-      begin
-       AddLog(Memo1, 'Shutdown error: ' + E.Message);
+          // ASPETTO che il thread finisca DAVVERO
+        if FMonitorWeight.AttendoCompletamento(2000) then
+          AddLog(Memo1, ' Weight Monitor stopped cleanly')
+        else
+         // TIMEOUT: il thread non ha finito
+          AddLog(Memo1, 'Weight Monitor timeout - will force cleanup');
+        // SEMPRE chiamare FreeAndNil - questo libera FStopEvent sul destroy
+
+      // FreeAndNil(FMonitorWeight);
+      except
+        on E: Exception do
+        begin
+         AddLog(Memo1, 'Shutdown error: ' + E.Message);
 //        OutputDebugString(PChar('Shutdown FMonitorWeight error: ' + E.Message));
-
-       // SEMPRE chiamare FreeAndNil - questo libera FStopEvent sul destroy
-       if Assigned(FMonitorWeight) then
+        end;
+      end;
+    finally
+      try
+        if Assigned(FMonitorWeight) then
           FreeAndNil(FMonitorWeight);
+      except
       end;
     end;
+
   end;
   FIsRunning := False;
   FIsShuttingDown := False;

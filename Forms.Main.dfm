@@ -3,7 +3,7 @@ object MainForm: TMainForm
   Top = 0
   Caption = 'CP800 Console'
   ClientHeight = 541
-  ClientWidth = 700
+  ClientWidth = 800
   Color = 16574398
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -19,7 +19,7 @@ object MainForm: TMainForm
   object PanelTop: TPanel
     Left = 0
     Top = 0
-    Width = 700
+    Width = 800
     Height = 28
     Align = alTop
     BevelOuter = bvNone
@@ -29,7 +29,7 @@ object MainForm: TMainForm
     object ToolBar1: TToolBar
       Left = 0
       Top = 0
-      Width = 700
+      Width = 800
       Height = 26
       ButtonHeight = 25
       ButtonWidth = 39
@@ -89,7 +89,7 @@ object MainForm: TMainForm
     end
   end
   object PanelConfig: TPanel
-    Left = 407
+    Left = 507
     Top = 28
     Width = 293
     Height = 494
@@ -103,7 +103,7 @@ object MainForm: TMainForm
   object PanelMain: TPanel
     Left = 0
     Top = 28
-    Width = 407
+    Width = 507
     Height = 494
     Align = alClient
     BevelOuter = bvNone
@@ -111,7 +111,7 @@ object MainForm: TMainForm
     object MainPageControl: TPageControl
       Left = 0
       Top = 0
-      Width = 407
+      Width = 507
       Height = 494
       Align = alClient
       TabOrder = 0
@@ -193,7 +193,7 @@ object MainForm: TMainForm
   object StatusBar1: TStatusBar
     Left = 0
     Top = 522
-    Width = 700
+    Width = 800
     Height = 19
     Panels = <
       item

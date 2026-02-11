@@ -390,8 +390,9 @@ begin
           FNameFile := QAppo.FieldByName('FtpPath').AsString+ '/' + FNameFile ;
           FNameFileProd := QAppo.FieldByName('FtpPath').AsString+ '/' + FNameFileProd;
         end;
-
-        ServerCfg.Host := QAppo.FieldByName('cp800_ip').asstring;
+        var Lhost := QAppo.FieldByName('cp800_ip').asstring;
+        ServerCfg.Host := lhost;
+//        ServerCfg.Host := QAppo.FieldByName('cp800_ip').asstring;
         ServerCfg.Port := QAppo.FieldByName('FtpPort').AsInteger;
         ServerCfg.Username := QAppo.FieldByName('FtpUser').AsString;
         ServerCfg.Password := QAppo.FieldByName('FtpPassword').AsString;
@@ -1096,9 +1097,7 @@ begin
   try
     StopAllMonitors;
 
-    // Piccola pausa per assicurarsi che tutti i thread siano terminati
-    Sleep(200);
-    Application.ProcessMessages;
+
 
   except
     on E: Exception do
@@ -1106,7 +1105,9 @@ begin
   end;
 
 
-
+  // Piccola pausa per assicurarsi che tutti i thread siano terminati
+  Sleep(500);
+  Application.ProcessMessages;
 
   // PASSO 2: Ora posso liberare i frame (i monitor sono fermati)
   if Assigned(FFrameList) then
