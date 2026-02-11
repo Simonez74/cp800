@@ -246,24 +246,11 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
     procedure Configure(Const AServerCfg : TServerConfig );
-
-
     procedure Start;
     procedure Stop;
-    procedure StartWeightMonitor;
-    procedure StopWeightMonitor;
-
-
-    procedure StopAllMonitoring;
-    procedure RestartAllMonitoring;
-
-
     procedure Shutdown;
 
     property IsRunning: Boolean read FIsRunning;
-
-
-
   end;
 
 implementation
@@ -285,10 +272,9 @@ end;
 
 destructor TFrameCp800.Destroy;
 begin
-  Shutdown;
-
- // Elabora eventuali messaggi residui
-
+// Assicurati che tutto sia fermo
+  if not FIsShuttingDown then
+    Shutdown;
 
   if assigned(FLabelMap) then
     FreeAndNil(FLabelMap);
@@ -331,20 +317,30 @@ end;
 
 procedure TFrameCp800.AddLog(Amemo : Tmemo;const Msg: string);
 begin
+  // Se il frame è in fase di distruzione, non loggare
+  if csDestroying in ComponentState then
+    Exit;
+
  // Thread-safe logging con TThread.Queue
   TThread.Queue(nil,
     procedure
     begin
-      if Assigned(AMemo) then
+//      if Assigned(AMemo) then
+      // Doppio check: il memo potrebbe essere stato distrutto nel frattempo
+      if Assigned(AMemo) and not (csDestroying in AMemo.ComponentState) then
       begin
-        AMemo.Lines.Add(Format('[%s] %s',
-          [FormatDateTime('hh:nn:ss', Now), Msg]));
+        try
+          AMemo.Lines.Add(Format('[%s] %s',
+            [FormatDateTime('hh:nn:ss', Now), Msg]));
 
-        // Auto-scroll all'ultima riga
-        AMemo.SelStart := Length(AMemo.Text);
-        AMemo.Perform(EM_SCROLLCARET, 0, 0);
-        if AMemo.Lines.Count > 1000 then
-          AMemo.Lines.Delete(0);
+          // Auto-scroll all'ultima riga
+          AMemo.SelStart := Length(AMemo.Text);
+          AMemo.Perform(EM_SCROLLCARET, 0, 0);
+          if AMemo.Lines.Count > 1000 then
+            AMemo.Lines.Delete(0);
+         except
+          // Ignora errori durante logging se il memo è in destroy
+        end;
       end;
     end);
 end;
@@ -367,7 +363,7 @@ begin
   FMonitor.OnStatus := FTPStatusHandler;
   // impostazioni
   FMonitor.IntervalMs := FServerCfg.Intervall;
-  FMonitor.Configure( FServerCfg.Host, FServerCfg.Port, FServerCfg.Username, FServerCfg.Password, FServerCfg.FileName);
+  FMonitor.RemoteFileDownload :=  FServerCfg.FileName;
   FMonitor.Start;
 
   FIsRunning := True;
@@ -404,9 +400,7 @@ begin
 
   FMonitorWeight.IntervalMs := FServerCfg.Intervall;
 
-  FMonitorWeight.Configure(FServerCfg.Host, FServerCfg.Port,
-                           FServerCfg.Username, FServerCfg.Password,
-                           FServerCfg.FileNameProd);
+  FMonitorWeight.RemoteFileDownload := FServerCfg.FileNameProd;
 
   // NON chiamiamo .Start() qui.
   // Il primo UpdateState (provocato dalla cambiata caption di lbl1102)
@@ -415,91 +409,52 @@ begin
   AddLog(MemoProd, 'Weight Monitor initialised (waiting for program data...)');
 end;
 
-procedure TFrameCp800.StartWeightMonitor;
-// Force-start manuale (BtnStart3): avvia il thread dei pesi anche se
-// ShouldRun sarebbe false.  Utile per test o riavvio manuale.
-begin
- if not Assigned(FMonitorWeight) then
-  begin
-    InitWeightMonitor;
-    if not Assigned(FMonitorWeight) then
-      Exit;
-  end;
-  FMonitorWeight.Start;
-//  FIsRunningWeight := True;
-  AddLog(MemoProd, 'Weight Monitor force-started');
-end;
-
 procedure TFrameCp800.Stop;
 begin
-{
-  if Assigned(FMonitor) then
+  if not Assigned(FMonitor) then
   begin
-    // Evita che eventuali queued-procedure chiamino i method del frame
+    AddLog(memo1, 'Monitor not running');
+    Exit;
+  end;
+
+  try
+    // Disconnetto eventi PRIMA di fermare
     FMonitor.OnParsed := nil;
     FMonitor.OnLog := nil;
     FMonitor.OnError := nil;
+    FMonitor.OnStatus := nil;
 
-    // Ferma il thread del monitor e aspetta che finisca
+    // fermo il thread
     FMonitor.Stop;
+
+     // Aspetto completamento
+    if FMonitor.AttendoCompletamento(3000) then
+      AddLog(memo1, 'Monitor stopped cleanly')
+    else
+      AddLog(memo1, 'Monitor timeout - forcing cleanup');
+
+    // LIBERO L'OGGETTO
     FreeAndNil(FMonitor);
-    MemoLog.Lines.Add('Monitor fermato');
+    AddLog(memo1, 'Monitor freed successfully');
+
+  except
+    // log opzionale
+     on E: Exception do
+     begin
+       AddLog(memo1,'Error stopping monitor: ' + E.Message);
+      // Libero anche in caso di errore
+      if Assigned(FMonitor) then
+        FreeAndNil(FMonitor);
+     end;
   end;
-  }
-  if Assigned(FMonitor) then
-  begin
-    try
-      FMonitor.Stop;
-      AddLog(memo1, 'Monitor stopped');
-    except
-      // log opzionale
-       on E: Exception do
-        AddLog(memo1,'Error stopping monitor: ' + E.Message);
-    end;
-  end;
+
 
   FIsRunning := False;
-  BtnStart.Enabled := True;
-  BtnStop.Enabled := False;
-end;
-
-procedure TFrameCp800.StopAllMonitoring;
-begin
-  try
-    // Ferma monitor principale
-    if Assigned(FMonitor) then
-    begin
-      Stop;
-      AddLog(Memo1, 'Monitor file1 stopped');
-    end;
-
-    // Ferma monitor pesi
-    if Assigned(FMonitorWeight) then
-    begin
-      StopWeightMonitor;
-      AddLog(MemoProd, 'Monitor file weights stopped');
-    end;
-  except
-    on E: Exception do
-      AddLog(Memo1, 'Error stop monitoring: ' + E.Message);
-  end;
-end;
-
-// Force-stop manuale (BtnStop3): ferma il thread dei pesi anche se
-// ApplyStateChange lo riavvierebbe al prossimo cambio di stato.
-procedure TFrameCp800.StopWeightMonitor;
-begin
-  if Assigned(FMonitorWeight) then
-  begin
-    try
-      FMonitorWeight.Stop;
-      AddLog(MemoProd, 'Weight Monitor force-stopped');
-    except
-      on E: Exception do
-        AddLog(MemoProd, 'Error stopping Weight Monitor: ' + E.Message);
-    end;
-  end;
-//  FIsRunningWeight := False;
+  // Aggiorna UI se i bottoni esistono ancora
+  if Assigned(BtnStart) then
+    BtnStart.Enabled := True;
+  if Assigned(BtnStop) then
+    BtnStop.Enabled := False;
 end;
 
 procedure TFrameCp800.AggiornaCondizioniLog;
@@ -516,6 +471,7 @@ end;
 
 procedure TFrameCp800.Shutdown;
 begin
+  FIsShuttingDown := True;
   // PASSO 1: DISCONNETTO PRIMA GLI EVENT HANDLER
   // disconnetto gli handler per evitare che queued-procedure chiamino il frame già libero
   if Assigned(FMonitor) then
@@ -593,6 +549,7 @@ begin
     end;
   end;
   FIsRunning := False;
+  FIsShuttingDown := False;
 end;
 
 procedure TFrameCp800.VirtualImage2Click(Sender: TObject);
@@ -1109,20 +1066,6 @@ end;
 procedure TFrameCp800.MonitorWeightLog(Sender: TObject; const Msg: string);
 begin
   AddLog(MemoProd, Msg);
-end;
-
-procedure TFrameCp800.RestartAllMonitoring;
-begin
-  try
-    if not Assigned(FMonitor) then
-    begin
-      Start;  // Avvia tutto
-      AddLog(Memo1, 'Monitor restart');
-    end;
-  except
-    on E: Exception do
-      AddLog(Memo1, 'Errore restart monitoring: ' + E.Message);
-  end;
 end;
 
 procedure TFrameCp800.CaricaComboBox(Combo: TComboBox; Campo, Tabella: string);

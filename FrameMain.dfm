@@ -1,7 +1,7 @@
 object FrameCp800: TFrameCp800
   Left = 0
   Top = 0
-  Width = 760
+  Width = 836
   Height = 510
   Constraints.MinHeight = 510
   Constraints.MinWidth = 700
@@ -12,25 +12,24 @@ object FrameCp800: TFrameCp800
   object ScrollBox1: TScrollBox
     Left = 100
     Top = 0
-    Width = 660
+    Width = 736
     Height = 510
     Align = alClient
     Color = 16574398
     ParentColor = False
     TabOrder = 0
-    ExplicitWidth = 778
-    ExplicitHeight = 477
+    ExplicitWidth = 660
     object PanelMenu: TPanel
       Left = 0
       Top = 0
-      Width = 656
+      Width = 732
       Height = 22
       Align = alTop
       BevelOuter = bvNone
       Color = 16574398
       ParentBackground = False
       TabOrder = 0
-      ExplicitWidth = 774
+      ExplicitWidth = 656
       object VirtualImage2: TVirtualImage
         Left = 4
         Top = 3
@@ -47,7 +46,7 @@ object FrameCp800: TFrameCp800
     object CardPanel1: TCardPanel
       Left = 0
       Top = 22
-      Width = 656
+      Width = 732
       Height = 484
       Align = alClient
       ActiveCard = CardDati
@@ -55,23 +54,21 @@ object FrameCp800: TFrameCp800
       Color = 16574398
       ParentBackground = False
       TabOrder = 1
-      ExplicitWidth = 774
-      ExplicitHeight = 451
+      ExplicitWidth = 656
       object CardAltriDati: TCard
         Left = 1
         Top = 1
-        Width = 654
+        Width = 730
         Height = 482
         Caption = 'Altri Dati'
         CardIndex = 0
         ParentColor = True
         TabOrder = 0
-        ExplicitWidth = 772
-        ExplicitHeight = 449
+        ExplicitWidth = 654
         object Splitter1: TSplitter
           Left = 0
           Top = 229
-          Width = 654
+          Width = 730
           Height = 3
           Cursor = crVSplit
           Align = alTop
@@ -80,7 +77,7 @@ object FrameCp800: TFrameCp800
         object Splitter2: TSplitter
           Left = 0
           Top = 479
-          Width = 654
+          Width = 730
           Height = 3
           Cursor = crVSplit
           Align = alBottom
@@ -90,19 +87,19 @@ object FrameCp800: TFrameCp800
         object Memo1: TMemo
           Left = 0
           Top = 0
-          Width = 654
+          Width = 730
           Height = 229
           Align = alTop
           Lines.Strings = (
             '')
           ScrollBars = ssVertical
           TabOrder = 0
-          ExplicitWidth = 772
+          ExplicitWidth = 654
         end
         object MemoProd: TMemo
           Left = 0
           Top = 232
-          Width = 654
+          Width = 730
           Height = 247
           Align = alClient
           Lines.Strings = (
@@ -110,25 +107,23 @@ object FrameCp800: TFrameCp800
           ReadOnly = True
           ScrollBars = ssVertical
           TabOrder = 1
-          ExplicitWidth = 772
-          ExplicitHeight = 214
+          ExplicitWidth = 654
         end
       end
       object CardDati: TCard
         Left = 1
         Top = 1
-        Width = 654
+        Width = 730
         Height = 482
         Caption = 'CardDati'
         CardIndex = 1
         ParentColor = True
         TabOrder = 1
-        ExplicitWidth = 772
-        ExplicitHeight = 449
+        ExplicitWidth = 654
         object StatusBar: TStatusBar
           Left = 0
           Top = 463
-          Width = 654
+          Width = 730
           Height = 19
           Panels = <
             item
@@ -137,13 +132,12 @@ object FrameCp800: TFrameCp800
             item
               Width = 50
             end>
-          ExplicitTop = 430
-          ExplicitWidth = 772
+          ExplicitWidth = 654
         end
         object Panel6: TPanel
           Left = 0
           Top = 0
-          Width = 654
+          Width = 730
           Height = 463
           Align = alClient
           BevelOuter = bvNone
@@ -156,10 +150,7 @@ object FrameCp800: TFrameCp800
           ParentBackground = False
           ParentFont = False
           TabOrder = 1
-          ExplicitLeft = -2
-          ExplicitTop = 4
-          ExplicitWidth = 772
-          ExplicitHeight = 430
+          ExplicitWidth = 654
           object LabelProgramNo: TLabel
             Left = 14
             Top = 4
@@ -8732,7 +8723,7 @@ object FrameCp800: TFrameCp800
             Left = 101
             Top = 301
             Width = 57
-            Height = 27
+            Height = 22
             Caption = 'Totals'
             Color = 16574399
             Font.Charset = ANSI_CHARSET
@@ -8842,7 +8833,7 @@ object FrameCp800: TFrameCp800
           object Bevel1: TBevel
             Left = 0
             Top = 413
-            Width = 654
+            Width = 730
             Height = 50
             Align = alBottom
             Shape = bsFrame
@@ -8864,7 +8855,7 @@ object FrameCp800: TFrameCp800
             Tag = 1
             Left = 14
             Top = 420
-            Width = 626
+            Width = 687
             Height = 28
             AutoSize = False
             Caption = 'lbl9001'
@@ -8881,27 +8872,30 @@ object FrameCp800: TFrameCp800
           object Bevel2: TBevel
             Left = 0
             Top = 168
-            Width = 654
+            Width = 730
             Height = 245
             Align = alClient
             ExplicitTop = 0
+            ExplicitWidth = 654
             ExplicitHeight = 84
           end
           object Bevel3: TBevel
             Left = 0
             Top = 84
-            Width = 654
+            Width = 730
             Height = 84
             Align = alTop
             ExplicitTop = 4
+            ExplicitWidth = 654
           end
           object Bevel4: TBevel
             Left = 0
             Top = 0
-            Width = 654
+            Width = 730
             Height = 84
             Align = alTop
             ExplicitTop = 4
+            ExplicitWidth = 654
           end
           object BtnStop: TButton
             Left = 115
@@ -8926,23 +8920,22 @@ object FrameCp800: TFrameCp800
       object CardStorico: TCard
         Left = 1
         Top = 1
-        Width = 654
+        Width = 730
         Height = 482
         Caption = 'CardStorico'
         CardIndex = 2
         ParentColor = True
         TabOrder = 2
-        ExplicitWidth = 772
-        ExplicitHeight = 449
+        ExplicitWidth = 654
         object Panel5: TPanel
           Left = 0
           Top = 0
-          Width = 654
+          Width = 730
           Height = 41
           Align = alTop
           ParentColor = True
           TabOrder = 0
-          ExplicitWidth = 772
+          ExplicitWidth = 654
           object Label1: TLabel
             Left = -2
             Top = 10
@@ -9001,19 +8994,17 @@ object FrameCp800: TFrameCp800
         object DBNavigator2: TDBNavigator
           Left = 0
           Top = 457
-          Width = 654
+          Width = 730
           Height = 25
           DataSource = DsStorico
           VisibleButtons = [nbFirst, nbPrior, nbNext, nbLast, nbRefresh]
           Align = alBottom
           TabOrder = 1
-          ExplicitTop = 424
-          ExplicitWidth = 772
         end
         object DBGridStorico: TDBGrid
           Left = 0
           Top = 41
-          Width = 654
+          Width = 730
           Height = 416
           Align = alClient
           Color = 16574398
@@ -9119,7 +9110,6 @@ object FrameCp800: TFrameCp800
     ParentFont = False
     Placement = svpLeft
     TabOrder = 1
-    ExplicitHeight = 477
     object BtnDati: TButton
       AlignWithMargins = True
       Left = 3

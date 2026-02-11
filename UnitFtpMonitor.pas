@@ -36,11 +36,13 @@ type
   private
     FServerCfg : TServerConfig;
 
-    FHost: string;
+{    FHost: string;
     FPort: Integer;
     FUser: string;
     FPass: string;
     FRemoteFile: string;
+ }
+
 
     FIntervalMs: Integer;
 //    FOutputFilePath: string;
@@ -57,6 +59,8 @@ type
     FOnError: TErrorEvent;
     FStatusEvent: TFTPStatusEvent;
 
+    FRemoteFileDownload: String;
+
     procedure DoQueueError(E: Exception);
     procedure OnFTPStatus(ASender: TObject; const AStatus: TIdStatus; const AStatusText: string);
   protected
@@ -67,7 +71,7 @@ type
     constructor Create(const AServerCfg : TServerConfig; const ACodeMap: TDictionary<string,string>);
     destructor Destroy; override;
 
-    procedure Configure(const AHost: string; APort: Integer; const AUser, APass, ARemoteFile: string);
+//    procedure Configure(const AHost: string; APort: Integer; const AUser, APass, ARemoteFile: string);
     procedure Start;
     procedure Stop;
 
@@ -89,6 +93,8 @@ type
 
     // Riferimento alla mappa (read-only)
     property CodeMap: TDictionary<string,string> read FCodeMap;
+
+    property RemoteFileDownload : String read FRemoteFileDownload write FRemoteFileDownload;
   end;
 
 implementation
@@ -145,11 +151,11 @@ begin
   // Copia thread-safe dei parametri di configurazione
   FOwner.FLock.Enter;
   try
-    localHost := FOwner.FHost;
-    localPort := FOwner.FPort;
-    localUser := FOwner.FUser;
-    localPass := FOwner.FPass;
-    localRemoteFile := FOwner.FRemoteFile;
+    localHost := FOwner.FServerCfg.Host;
+    localPort := FOwner.FServerCfg.Port;
+    localUser := FOwner.FServerCfg.Username;
+    localPass := FOwner.FServerCfg.Password;
+    localRemoteFile := FOwner.RemoteFileDownload ;
   finally
     FOwner.FLock.Leave;
   end;
@@ -195,7 +201,7 @@ begin
       ms := TMemoryStream.Create;
       try
         try
-          FIdFTP.Get(FOwner.FRemoteFile, ms, False);
+          FIdFTP.Get(FOwner.RemoteFileDownload, ms, False);
           ms.Position := 0;
           ss := TStringStream.Create('', TEncoding.UTF8);
           try
@@ -290,7 +296,7 @@ begin
     FIntervalMs := FServerCfg.Intervall
   else
     FIntervalMs := 200;
-  FPort := 21;
+
 //  FLastValues := TStringList.Create;
 //  FLastValues.NameValueSeparator := '=';
   // FWatchKeys := ['2001', '2002', '4001'];
@@ -349,6 +355,7 @@ begin
 
 end;
 
+{
 procedure TFtpMonitor.Configure(const AHost: string; APort: Integer; const AUser, APass, ARemoteFile: string);
 begin
   FLock.Enter;
@@ -362,7 +369,7 @@ begin
     FLock.Leave;
   end;
 end;
-
+ }
 
 
 procedure TFtpMonitor.Start;
