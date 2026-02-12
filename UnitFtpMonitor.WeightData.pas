@@ -39,9 +39,6 @@ type
 
     // Callback per il timer del periodo aggiuntivo
     procedure OnPeriodoAggiuntivoTerminato(Sender: TObject);
-
-
-
   protected
     procedure DoQueueParsed(const APairs: TStringList); override;
   public
@@ -128,6 +125,17 @@ end;
 
 destructor TWeightFtpMonitor.Destroy;
 begin
+  FUltimoIdProcessato := '';
+  FBaseOutputPath := '';
+
+
+  FStatoAttuale.DsProgram:= '';
+  FStatoAttuale.PackMode:= '';
+  FStatoAttuale.OutputFileName:= '';
+  FStatoAttuale.LastIDFile:= '';
+
+
+
 
   // 1. Fermo e libero il timer
   if Assigned(FPeriodoAggiuntivoTimer) then
@@ -136,6 +144,9 @@ begin
     FPeriodoAggiuntivoTimer.Enabled := False;
     FreeAndNil(FPeriodoAggiuntivoTimer);
   end;
+
+  OnWeight := nil;
+
 
   // 2. Salvo ultimo ID
   // salvo ultimo ID prima di distruggere
@@ -150,6 +161,10 @@ begin
   // 3. Libero FStateLock
   if Assigned(FStateLock) then
     FreeAndNil(FStateLock);
+
+
+  FUltimoIdProcessato :='';
+  FBaseOutputPath:='';
 
   // 4. Chiamo inherited (che libera FStopEvent e FLock della classe base)
   inherited;

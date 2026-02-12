@@ -80,6 +80,7 @@ type
     procedure PageControlChanging(Sender: TObject; var AllowChange: Boolean);
     procedure PageControlChange(Sender: TObject);
     procedure ButDeleteOldsClick(Sender: TObject);
+    procedure Qcp800_setupBeforePost(DataSet: TDataSet);
   private
     { Private declarations }
     FConfigManager: TConfigManager;  // Riferimento al manager
@@ -121,6 +122,8 @@ begin
 
   SpinEditDelEventsOlderThan.OnChange := MarkAsModified;
 
+
+
   CbBeltB.OnClick := MarkAsModified;
   CbBeltC.OnClick := MarkAsModified;
   CbBeltD.OnClick := MarkAsModified;
@@ -159,6 +162,11 @@ begin
 	AllowChange := True;
   if PageControl.ActivePage = TsParametriDatabase then
     AllowChange := DMIConsole.IsConnected;
+end;
+
+procedure TFrameConfiguration.Qcp800_setupBeforePost(DataSet: TDataSet);
+begin
+ Modified := True;
 end;
 
 procedure TFrameConfiguration.SetModified(const Value: Boolean);
@@ -320,7 +328,7 @@ begin
   FConfigManager.SaveToFile;
 
   Modified := False;
-  ShowMessage('Configurazione salvata con successo');
+//  ShowMessage('Configurazione salvata con successo');
 end;
 
 

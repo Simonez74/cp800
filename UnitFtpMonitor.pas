@@ -35,31 +35,17 @@ type
   TFtpMonitor = class(TObject)
   private
     FServerCfg : TServerConfig;
-
-{    FHost: string;
-    FPort: Integer;
-    FUser: string;
-    FPass: string;
-    FRemoteFile: string;
- }
-
-
     FIntervalMs: Integer;
-//    FOutputFilePath: string;
-//    FWatchKeys: TArray<string>;
+    FRemoteFileDownload: String;
 
     FCodeMap: TDictionary<string,string>; // riferimento esterno (non owned)
-
-//    FLastValues: TStringList;
-
     FStopEvent: TEvent; // evento per wakeup immediato
     FLock: TCriticalSection; // protezione thread-safety
+
     FOnParsed: TParsedEvent;
     FOnLog: TLogEvent;
     FOnError: TErrorEvent;
     FStatusEvent: TFTPStatusEvent;
-
-    FRemoteFileDownload: String;
 
     procedure DoQueueError(E: Exception);
     procedure OnFTPStatus(ASender: TObject; const AStatus: TIdStatus; const AStatusText: string);
@@ -71,7 +57,6 @@ type
     constructor Create(const AServerCfg : TServerConfig; const ACodeMap: TDictionary<string,string>);
     destructor Destroy; override;
 
-//    procedure Configure(const AHost: string; APort: Integer; const AUser, APass, ARemoteFile: string);
     procedure Start;
     procedure Stop;
 
@@ -242,7 +227,7 @@ begin
               lines.Free;
             end;
 
-            // consegna i pairs al proprietario (quest'ultimo farà Queue e libererà la copia)
+            // consegno i pairs al proprietario (quest'ultimo farà Queue e libererà la copia)
             FOwner.DoQueueParsed(pairs);
           finally
             pairs.Free;
@@ -297,9 +282,7 @@ begin
   else
     FIntervalMs := 200;
 
-//  FLastValues := TStringList.Create;
-//  FLastValues.NameValueSeparator := '=';
-  // FWatchKeys := ['2001', '2002', '4001'];
+  FRemoteFileDownload := FServerCfg.FileName;
 
   // evento auto-reset (ManualReset = False) inizialmente non segnalato
   FStopEvent := TEvent.Create(nil, False, False, '');
@@ -310,6 +293,17 @@ end;
 
 destructor TFtpMonitor.Destroy;
 begin
+   FCodeMap := nil;
+//  FServerCfg.Inizializza;
+  FServerCfg.Host := '';
+  FServerCfg.Username := '';
+  FServerCfg.Password := '';
+  FServerCfg.RemotePath := '';
+  FServerCfg.FileName := '';
+  FServerCfg.FileNameProd := '';
+  FServerCfg.Id := '';
+  FServerCfg.NameMachine := '';
+
   Stop;
 //  FreeAndNil(FLastValues);
 
@@ -324,6 +318,10 @@ begin
     FreeAndNil(FLock);
     DoQueueLog('FLock freed'); // Debug
   end;
+
+
+
+
 
   inherited;
 end;
@@ -355,23 +353,6 @@ begin
 
 end;
 
-{
-procedure TFtpMonitor.Configure(const AHost: string; APort: Integer; const AUser, APass, ARemoteFile: string);
-begin
-  FLock.Enter;
-  try
-    FHost := AHost;
-    FPort := APort;
-    FUser := AUser;
-    FPass := APass;
-    FRemoteFile := ARemoteFile;
-  finally
-    FLock.Leave;
-  end;
-end;
- }
-
-
 procedure TFtpMonitor.Start;
 begin
   if Assigned(FThread) then
@@ -395,12 +376,12 @@ begin
 
   MaxWaitMs := 2000;
 
-  // Segnala l'evento per svegliare immediatamente il thread se è in WaitFor
-  // 1) Segnala l'evento: se il thread è in WaitFor(IntervalMs) esce subito
+  // Segnalo l'evento per svegliare immediatamente il thread se è in WaitFor
+  // 1) Segnalo l'evento: se il thread è in WaitFor(IntervalMs) esce subito
   if Assigned(FStopEvent) then
     FStopEvent.SetEvent;
 
-  // 2) Imposta Terminate per sicurezza (il thread controlla anche "Terminated" nel while)
+  // 2) Imposto Terminate per sicurezza (il thread controlla anche "Terminated" nel while)
   FThread.Terminate;
 
 {  if Assigned(FThread) then
@@ -422,9 +403,9 @@ begin
 
   end;}
 
-  // 3) Polling con timeout: aspetta che il thread termini senza bloccare indefinitamente
-  // Aspetta per un breve tempo (il thread dovrebbe uscire velocemente grazie all'evento);
-  // non blocchiamo indefinitamente l'UI: attendiamo fino a un timeout ragionevole
+  // 3) Polling con timeout: aspetto che il thread termini senza bloccare indefinitamente
+  // Aspetto per un breve tempo (il thread dovrebbe uscire velocemente grazie all'evento);
+  // non blocco indefinitamente l'UI: attendo fino a un timeout ragionevole
   waited := 0;
   while Assigned(FThread) and (not FThread.Finished) and (waited < MaxWaitMs) do
    // and (waited < 2000) do
@@ -435,7 +416,7 @@ begin
   end;
 
   // 4) Libero solo se il thread è effettivamente finito
-  // Se il thread è terminato, liberalo
+  // Se il thread è terminato, lo libero
   if Assigned(FThread) and FThread.Finished then
   begin
     FreeAndNil(FThread);
@@ -443,8 +424,7 @@ begin
   end
   else
   begin
-    // Se non è ancora terminato dopo il timeout, lasciamo che venga liberato altrove (caller può fornirsi).
-    // Possiamo loggare per debugging
+    // Se non è ancora terminato dopo il timeout, lasco che venga liberato altrove.
     DoQueueLog('Stop: thread did not finish within timeout; will be freed later');
       // Il thread verrà comunque liberato dal destructor
   end;
@@ -503,15 +483,9 @@ end;
 
 procedure TFtpMonitor.DoQueueParsed(const APairs: TStringList);
 var
-//  rawCopy,  copyPairs, filteredCopy: TStringList;
   FilteredPairs : TStringList ;
-//  wk, watchedKey: string;
-
-//  shouldWrite: Boolean;
   i: Integer;
-//  key, val, readable: string;
   key, val: string;
-//   localWatchKeys: TArray<string>;
   localOnParsed: TParsedEvent;
 begin
 // ========================================
@@ -520,7 +494,6 @@ begin
   FLock.Enter;
   try
     // 1. Copia locale delle proprietà condivise
-//    localWatchKeys := Copy(FWatchKeys, 0, Length(FWatchKeys));
     localOnParsed := FOnParsed;
 
     // Creo una copia filtrata solo se c'è un handler
@@ -543,39 +516,9 @@ begin
     end
     else
       FilteredPairs := nil;
-{      // Creo una copia locale: il worker thread potrebbe ricevere APairs da parsing e voglio
-    // gestire in modo indipendente la lifetime di ciò che passiamo alla UI.
-    if Assigned(localOnParsed) then
-    begin
-      copyPairs := TStringList.Create;
-      copyPairs.Assign(APairs);
-    end;
-    }
-
- (*   // 2. Controlla se i watch-keys sono cambiati
-     // Controlla watch-keys
-    shouldWrite := False;
-    for wk in localWatchKeys  do
-    begin
-      if FLastValues.Values[wk] <> copyPairs.Values[wk] then
-      begin
-        shouldWrite := True;
-        Break;
-      end;
-    end;
-
-    // 3. Aggiorna FLastValues (ancora dentro il lock)
-    for wk in localWatchKeys do
-      FLastValues.Values[wk] := APairs.Values[wk];
-   *)
   finally
     FLock.Leave;
   end;
-
- (* // 4. Scrittura file (fuori dal lock per non bloccare)
-  if shouldWrite then
-      Write3001_3003_ToFile(copyPairs);
-   *)
 
   if Assigned(FilteredPairs) then
   begin
@@ -590,81 +533,6 @@ begin
       end) ;
 
   end;
-
-      (*
-  // Creo una copia completa dei dati ricevuti dal thread worker
-  copyPairs := TStringList.Create;
-//  rawCopy := TStringList.Create;
-  // Creo la copia filtrata che conterrà solo le coppie presenti in FCodeMap
-  filteredCopy := TStringList.Create;
-
-  try
-    copyPairs.Assign(APairs);
-
-
-//    rawCopy.Assign(APairs);
-
-    filteredCopy.NameValueSeparator := '=';
-    if Assigned(FCodeMap) then
-    begin
-      for i := 0 to copyPairs.Count - 1 do
-      begin
-        key := copyPairs.Names[i];
-        if FCodeMap.ContainsKey(key) then
-          filteredCopy.Values[key] := copyPairs.ValueFromIndex[i];
-      end;
-    end;
-
-    // Controllo dei watch-keys e scrittura su file: USMO copyPairs per questo controllo,
-    // perché i watch-keys potrebbero non essere presenti in FCodeMap e quindi verrebbero
-    // persi nel filteredCopy
-    shouldWrite := False;
-    for watchedKey in FWatchKeys do
-    begin
-      if FLastValues.Values[watchedKey] <> copyPairs.Values[watchedKey] then
-      begin
-        shouldWrite := True;
-        Break;
-      end;
-    end;
-
-    if shouldWrite then
-      Write3001_3003_ToFile(copyPairs);
-
-    // Aggiorna last values usando rawCopy
-    for watchedKey in FWatchKeys do
-      FLastValues.Values[watchedKey] := copyPairs.Values[watchedKey];
-
-    // Se ci sono handler, invochiamo OnParsed nel main thread passando solo la filteredCopy.
-    // Prima, se richiesto, logghiamo mostrando il nome leggibile (usando FCodeMap).
-    if Assigned(FOnParsed) then
-      TThread.Queue(nil,
-        procedure
-        var ii : integer;
-        begin
-            {
-          if Assigned(FOnLog) and Assigned(FCodeMap) then
-          begin
-            for ii := 0 to filteredCopy.Count - 1 do
-            begin
-              key := filteredCopy.Names[ii];
-              val := filteredCopy.ValueFromIndex[ii];
-              if FCodeMap.TryGetValue(key, readable) then
-                FOnLog(Self, Format('%s (%s) = %s', [key, readable, val]))
-              else
-                FOnLog(Self, Format('%s = %s', [key, val]));
-            end;
-          end;
-            }
-          // Passiamo al consumer solo i valori mappati (filteredCopy)
-          if Assigned(FOnParsed) then
-            FOnParsed(Self, filteredCopy);
-        end)
-  finally
-    copyPairs.Free;
-    filteredCopy.Free;
-  end;
-      *)
 end;
 
 procedure TFtpMonitor.OnFTPStatus(ASender: TObject; const AStatus: TIdStatus; const AStatusText: string);

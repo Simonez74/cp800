@@ -59,8 +59,6 @@ type
 
   TMainForm = class(TForm)
     ApplicationEvents1: TApplicationEvents;
-    ActionList1: TActionList;
-    ActionConfigurazione: TAction;
     MainPageControl: TPageControl;
     PanelTop: TPanel;
     ToolBar1: TToolBar;
@@ -78,6 +76,7 @@ type
     AnimationConnection: TActivityIndicator;
     MemoConnectionError: TMemo;
     ButtonRetryConnection: TButton;
+    ToolButtonDeleteHistorical: TToolButton;
 
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -87,6 +86,7 @@ type
     procedure ButtonRetryConnectionClick(Sender: TObject);
     procedure ToolButtonConfigClick(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
+    procedure ToolButtonDeleteHistoricalClick(Sender: TObject);
   private
     { Private declarations }
     FFrameList: TObjectList<TFrameCp800>;
@@ -115,9 +115,6 @@ type
 
 
     procedure StopAllMonitors;
-    procedure DestroyAllFrames;
-    procedure RestartAllMonitors;
-
   public
     { Public declarations }
 
@@ -370,7 +367,6 @@ begin
 
 
 
-
       FFrame := TFrameCp800.Create( nil );
       FFrame.Align := alClient;
       FFrame.Parent := TabSheet;
@@ -394,11 +390,7 @@ begin
         if not FtpPath.EndsWith('/') then
           FtpPath := FtpPath + '/';
 
-
-        var Lhost := QAppo.FieldByName('cp800_ip').asstring;
-
-        ServerCfg.Host := lhost;
-//        ServerCfg.Host := QAppo.FieldByName('cp800_ip').asstring;
+        ServerCfg.Host := QAppo.FieldByName('cp800_ip').asstring;
         ServerCfg.Port := QAppo.FieldByName('FtpPort').AsInteger;
         ServerCfg.Username := QAppo.FieldByName('FtpUser').AsString;
         ServerCfg.Password := QAppo.FieldByName('FtpPassword').AsString;
@@ -423,9 +415,10 @@ begin
           //   2. Chiama InitWeightMonitor → crea FMonitorWeight (dati pesi) ma NON lo avvia
           //   3. FMonitorWeight parte automaticamente quando le label vengono populate
           // ═══════════════════════════════════════════════════════════════════
-         Fframe.Start;
+          Fframe.Start;
           //  InitWeightMonitor viene chiamato dentro Start() e il monitor dei pesi
           // parte automaticamente quando serve.
+
           FFrameList.Add(FFrame);
 
       except
@@ -458,10 +451,7 @@ begin
     MainPageControl.ActivePageIndex := 0;
 end;
 
-procedure TMainForm.DestroyAllFrames;
-begin
 
-end;
 
 procedure TMainForm.EnterConfigurationMode;
 // Ferma e libera TUTTO quando entro in config
@@ -582,34 +572,6 @@ begin
   UpdateStatusBar;
 end;
 
-
-
-procedure TMainForm.RestartAllMonitors;
-// (magari per un bottone "Restart" futuro)
-var
-  Frame: TFrameCp800;
-  i: Integer;
-begin
-  for i := 0 to FFrameList.Count - 1 do
-  begin
-    Frame := FFrameList[i];
-    if Assigned(Frame) then
-    begin
-      try
-        // Se non è in esecuzione, lo avvio
-        if not Frame.IsRunning then
-          Frame.Start;
-      except
-        on E: Exception do
-          LogToFile(Format('Errore riavviando frame %d: %s', [i, E.Message]));
-      end;
-    end;
-  end;
-
-  UpdateStatusBar;
-  LogToFile('Restart all monitors completed');
-end;
-
 procedure TMainForm.UpdateStatusBar;
 begin
   if not Assigned(StatusBar1) then
@@ -648,6 +610,8 @@ begin
     end;
   end;
 
+  // Mostra pannello (gira nel thread principale)
+  ShowConnectionPanel('Connessione al database in corso...', False);
   // Tenta nuova connessione con i parametri aggiornati
   ConnectToDatabase ;
 end;
@@ -784,6 +748,18 @@ begin
     // Chiedo conferma se ci sono frame attivi
     if Assigned(FFrameList) and (FFrameList.Count > 0) then
     begin
+      if AskConfirmation( Format('There are %d monitor active FTP.' + sLineBreak +
+               'To access the configuration they will be stopped.' + sLineBreak + sLineBreak +
+               'when exiting the configuration they will be automatically recreated.' + sLineBreak + sLineBreak +
+               'Continue?', [FFrameList.Count]),
+               [],
+                   5000) <> mrYes then
+      begin
+        // Annulla
+        FConfigVisible := False;
+        Exit;
+      end;
+      {
       if MessageDlg(
         Format('There are %d monitor active FTP.' + sLineBreak +
                'To access the configuration they will be stopped.' + sLineBreak + sLineBreak +
@@ -798,6 +774,7 @@ begin
         FConfigVisible := False;
         Exit;
       end;
+      }
     end;
 
     // FERMO E LIBERA TUTTO
@@ -823,7 +800,13 @@ begin
     // Gestisco modifiche non salvate
     if FFrameConfig.Modified then
     begin
-      case MessageDlg(
+      case AskConfirmation( 'There are unsaved changes. What do you want to do??' + sLineBreak + sLineBreak +
+        'Yes = Save and apply' + sLineBreak +
+        'No = Discard changes' + sLineBreak ,
+        [ tcbYes, tcbNo, tcbCancel ],
+                   5000)
+      of
+{      case MessageDlg(
         'There are unsaved changes. What do you want to do??' + sLineBreak + sLineBreak +
         'Yes = Save and apply' + sLineBreak +
         'No = Discard changes' + sLineBreak +
@@ -832,6 +815,7 @@ begin
         [mbYes, mbNo, mbCancel],
         0
       ) of
+      }
         mrYes:
         begin
           // Salvo configurazione
@@ -841,7 +825,9 @@ begin
           // Riconnetto al database se necessario
           if not FDatabaseConnected then
           begin
-            ShowMessage('Connecting to the database in progress...');
+//            ShowMessage('Connecting to the database in progress...');
+            // Mostra pannello (gira nel thread principale)
+            ShowConnectionPanel('Connessione al database in corso...', False);
             ConnectToDatabase;
           end;
         end;
@@ -879,6 +865,15 @@ end;
 procedure TMainForm.ToolButtonConfigClick(Sender: TObject);
 begin
   ToggleConfigPanel;
+end;
+
+procedure TMainForm.ToolButtonDeleteHistoricalClick(Sender: TObject);
+begin
+      // Crea frame configurazione
+  FFrameConfig := TFrameConfiguration.Create(Self);
+  FFrameConfig.Parent := PanelConfig;
+  FFrameConfig.Align := alClient;
+  FFrameConfig.SetConfigManager(FConfigManager);
 end;
 
 procedure TMainForm.ApplicationEvents1Exception(Sender: TObject; E: Exception);
@@ -1126,12 +1121,19 @@ begin
   // Chiedi conferma prima di chiudere se ci sono monitor attivi
    if Assigned(FFrameList) and ( FFrameList.Count > 0 ) then
   begin
+   response := AskConfirmation('FTP monitors are still active. Do you want to stop them and close the application?',
+                [], 5000) ;
+
+
+
+    {
     response := MessageDlg(
-      'I monitor FTP sono ancora attivi. Vuoi fermarli e chiudere l''applicazione?',
+      'FTP monitors are still active. Do you want to stop them and close the application?',
       mtConfirmation,
       [mbYes, mbNo],
       0
     );
+    }
 
     if response = mrYes then
     begin

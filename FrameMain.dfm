@@ -61,7 +61,6 @@ object FrameCp800: TFrameCp800
         CardIndex = 0
         ParentColor = True
         TabOrder = 0
-        ExplicitWidth = 654
         object Splitter1: TSplitter
           Left = 0
           Top = 229
@@ -143,6 +142,22 @@ object FrameCp800: TFrameCp800
           ParentBackground = False
           ParentFont = False
           TabOrder = 1
+          object Bevel2: TBevel
+            Left = 0
+            Top = 168
+            Width = 730
+            Height = 245
+            Align = alClient
+            ExplicitTop = 169
+          end
+          object Bevel3: TBevel
+            Left = 0
+            Top = 84
+            Width = 730
+            Height = 84
+            Align = alTop
+            ExplicitTop = 83
+          end
           object LabelProgramNo: TLabel
             Left = 14
             Top = 4
@@ -233,7 +248,7 @@ object FrameCp800: TFrameCp800
           end
           object LabelStatus: TLabel
             Left = 16
-            Top = 338
+            Top = 347
             Width = 28
             Height = 13
             Caption = 'State'
@@ -248,9 +263,9 @@ object FrameCp800: TFrameCp800
           end
           object Image1: TImage
             Left = 332
-            Top = 83
+            Top = 82
             Width = 205
-            Height = 103
+            Height = 89
             Picture.Data = {
               0954506E67496D61676589504E470D0A1A0A0000000D4948445200000DA50000
               08D40806000000052EE0DE000000097048597300002E2300002E230178A53F76
@@ -8137,7 +8152,7 @@ object FrameCp800: TFrameCp800
           object Lbl4015: TLabel
             Tag = 1
             Left = 197
-            Top = 192
+            Top = 201
             Width = 65
             Height = 19
             Alignment = taCenter
@@ -8156,7 +8171,7 @@ object FrameCp800: TFrameCp800
           object lbl4016: TLabel
             Tag = 1
             Left = 197
-            Top = 217
+            Top = 226
             Width = 65
             Height = 19
             Alignment = taCenter
@@ -8175,7 +8190,7 @@ object FrameCp800: TFrameCp800
           object lbl4017: TLabel
             Tag = 1
             Left = 197
-            Top = 242
+            Top = 251
             Width = 65
             Height = 19
             Alignment = taCenter
@@ -8194,7 +8209,7 @@ object FrameCp800: TFrameCp800
           object lbl4018: TLabel
             Tag = 1
             Left = 197
-            Top = 267
+            Top = 276
             Width = 65
             Height = 19
             Alignment = taCenter
@@ -8213,7 +8228,7 @@ object FrameCp800: TFrameCp800
           object lbl4019: TLabel
             Tag = 1
             Left = 274
-            Top = 192
+            Top = 201
             Width = 172
             Height = 19
             Alignment = taCenter
@@ -8232,7 +8247,7 @@ object FrameCp800: TFrameCp800
           object lbl4020: TLabel
             Tag = 28
             Left = 274
-            Top = 217
+            Top = 226
             Width = 172
             Height = 19
             Alignment = taCenter
@@ -8251,7 +8266,7 @@ object FrameCp800: TFrameCp800
           object lbl4021: TLabel
             Tag = 1
             Left = 274
-            Top = 242
+            Top = 251
             Width = 172
             Height = 19
             Alignment = taCenter
@@ -8270,7 +8285,7 @@ object FrameCp800: TFrameCp800
           object lbl4022: TLabel
             Tag = 1
             Left = 274
-            Top = 267
+            Top = 276
             Width = 172
             Height = 19
             Alignment = taCenter
@@ -8289,7 +8304,7 @@ object FrameCp800: TFrameCp800
           object lbl4023: TLabel
             Tag = 1
             Left = 471
-            Top = 192
+            Top = 201
             Width = 172
             Height = 19
             Alignment = taCenter
@@ -8308,7 +8323,7 @@ object FrameCp800: TFrameCp800
           object lbl4024: TLabel
             Tag = 1
             Left = 471
-            Top = 217
+            Top = 226
             Width = 172
             Height = 19
             Alignment = taCenter
@@ -8327,7 +8342,7 @@ object FrameCp800: TFrameCp800
           object lbl4025: TLabel
             Tag = 1
             Left = 471
-            Top = 242
+            Top = 251
             Width = 172
             Height = 19
             Alignment = taCenter
@@ -8346,7 +8361,7 @@ object FrameCp800: TFrameCp800
           object lbl4026: TLabel
             Tag = 1
             Left = 471
-            Top = 267
+            Top = 276
             Width = 172
             Height = 19
             Alignment = taCenter
@@ -8365,7 +8380,7 @@ object FrameCp800: TFrameCp800
           object lbl4005: TLabel
             Tag = 1
             Left = 274
-            Top = 302
+            Top = 311
             Width = 172
             Height = 27
             Alignment = taCenter
@@ -8385,7 +8400,7 @@ object FrameCp800: TFrameCp800
           object lbl4006: TLabel
             Tag = 1
             Left = 472
-            Top = 302
+            Top = 311
             Width = 171
             Height = 27
             Alignment = taCenter
@@ -8422,7 +8437,7 @@ object FrameCp800: TFrameCp800
           end
           object LblBelt: TLabel
             Left = 11
-            Top = 171
+            Top = 180
             Width = 37
             Height = 18
             Caption = 'Belts'
@@ -8439,7 +8454,7 @@ object FrameCp800: TFrameCp800
           end
           object LblBeltA: TLabel
             Left = 24
-            Top = 192
+            Top = 201
             Width = 9
             Height = 18
             Caption = 'A'
@@ -8454,7 +8469,7 @@ object FrameCp800: TFrameCp800
           end
           object LblBeltB: TLabel
             Left = 24
-            Top = 217
+            Top = 226
             Width = 11
             Height = 18
             Caption = 'B'
@@ -8469,7 +8484,7 @@ object FrameCp800: TFrameCp800
           end
           object LblBeltC: TLabel
             Left = 24
-            Top = 242
+            Top = 251
             Width = 11
             Height = 18
             Caption = 'C'
@@ -8484,7 +8499,7 @@ object FrameCp800: TFrameCp800
           end
           object LblBeltD: TLabel
             Left = 24
-            Top = 267
+            Top = 276
             Width = 11
             Height = 18
             Caption = 'D'
@@ -8499,7 +8514,7 @@ object FrameCp800: TFrameCp800
           end
           object LblSpeed: TLabel
             Left = 197
-            Top = 171
+            Top = 180
             Width = 65
             Height = 18
             Alignment = taCenter
@@ -8518,7 +8533,7 @@ object FrameCp800: TFrameCp800
           end
           object LblTotalsKg: TLabel
             Left = 274
-            Top = 171
+            Top = 180
             Width = 159
             Height = 18
             Alignment = taCenter
@@ -8537,7 +8552,7 @@ object FrameCp800: TFrameCp800
           end
           object LblTotalPacks: TLabel
             Left = 466
-            Top = 171
+            Top = 180
             Width = 177
             Height = 18
             Alignment = taCenter
@@ -8555,7 +8570,7 @@ object FrameCp800: TFrameCp800
             ParentFont = False
           end
           object LblDescProgram2: TLabel
-            Left = 10
+            Left = 16
             Top = 136
             Width = 77
             Height = 20
@@ -8677,12 +8692,12 @@ object FrameCp800: TFrameCp800
             ParentFont = False
           end
           object LblSetPoint: TLabel
-            Left = 26
+            Left = 28
             Top = 88
-            Width = 236
+            Width = 237
             Height = 18
             Alignment = taCenter
-            Caption = 'Set point        1                               2'
+            Caption = 'Set point           A/B                    C/D'
             Font.Charset = ANSI_CHARSET
             Font.Color = clWindowText
             Font.Height = -15
@@ -8694,7 +8709,7 @@ object FrameCp800: TFrameCp800
           end
           object LblDescProgram9: TLabel
             Left = 64
-            Top = 171
+            Top = 180
             Width = 112
             Height = 18
             Alignment = taCenter
@@ -8713,7 +8728,7 @@ object FrameCp800: TFrameCp800
           end
           object LblTotals: TLabel
             Left = 101
-            Top = 301
+            Top = 310
             Width = 57
             Height = 22
             Caption = 'Totals'
@@ -8730,7 +8745,7 @@ object FrameCp800: TFrameCp800
           object LblWeightA: TLabel
             Tag = 2
             Left = 64
-            Top = 192
+            Top = 201
             Width = 112
             Height = 19
             Alignment = taCenter
@@ -8749,7 +8764,7 @@ object FrameCp800: TFrameCp800
           object LblWeightC: TLabel
             Tag = 2
             Left = 64
-            Top = 242
+            Top = 251
             Width = 112
             Height = 19
             Alignment = taCenter
@@ -8768,7 +8783,7 @@ object FrameCp800: TFrameCp800
           object LblWeightD: TLabel
             Tag = 2
             Left = 64
-            Top = 267
+            Top = 276
             Width = 112
             Height = 19
             Alignment = taCenter
@@ -8787,7 +8802,7 @@ object FrameCp800: TFrameCp800
           object LblWeightB: TLabel
             Tag = 2
             Left = 64
-            Top = 217
+            Top = 226
             Width = 112
             Height = 19
             Alignment = taCenter
@@ -8805,7 +8820,7 @@ object FrameCp800: TFrameCp800
           end
           object lblTotSpeed: TLabel
             Left = 197
-            Top = 301
+            Top = 310
             Width = 65
             Height = 27
             Alignment = taCenter
@@ -8836,7 +8851,7 @@ object FrameCp800: TFrameCp800
           object lbl5001: TSimonLabel
             Tag = 1
             Left = 206
-            Top = 352
+            Top = 361
             Width = 56
             Height = 21
             Caption = 'lbl5001'
@@ -8861,25 +8876,6 @@ object FrameCp800: TFrameCp800
             ParentFont = False
             Transparent = False
           end
-          object Bevel2: TBevel
-            Left = 0
-            Top = 168
-            Width = 730
-            Height = 245
-            Align = alClient
-            ExplicitTop = 0
-            ExplicitWidth = 654
-            ExplicitHeight = 84
-          end
-          object Bevel3: TBevel
-            Left = 0
-            Top = 84
-            Width = 730
-            Height = 84
-            Align = alTop
-            ExplicitTop = 4
-            ExplicitWidth = 654
-          end
           object Bevel4: TBevel
             Left = 0
             Top = 0
@@ -8891,7 +8887,7 @@ object FrameCp800: TFrameCp800
           end
           object BtnStop: TButton
             Left = 115
-            Top = 359
+            Top = 368
             Width = 75
             Height = 20
             Caption = 'Stop'
@@ -8900,7 +8896,7 @@ object FrameCp800: TFrameCp800
           end
           object BtnStart: TButton
             Left = 34
-            Top = 357
+            Top = 366
             Width = 75
             Height = 25
             Caption = 'Start'
@@ -8918,7 +8914,6 @@ object FrameCp800: TFrameCp800
         CardIndex = 2
         ParentColor = True
         TabOrder = 2
-        ExplicitWidth = 654
         object Panel5: TPanel
           Left = 0
           Top = 0
@@ -8927,7 +8922,6 @@ object FrameCp800: TFrameCp800
           Align = alTop
           ParentColor = True
           TabOrder = 0
-          ExplicitWidth = 654
           object Label1: TLabel
             Left = -2
             Top = 10

@@ -75,8 +75,8 @@ object FrameConfiguration: TFrameConfiguration
         WordWrap = True
       end
       object Label1: TLabel
-        Left = 484
-        Top = 176
+        Left = 87
+        Top = 212
         Width = 163
         Height = 15
         Caption = 'Unloading belts configurations'
@@ -570,6 +570,7 @@ object FrameConfiguration: TFrameConfiguration
     Top = 134
   end
   object Qcp800_setup: TFDQuery
+    BeforePost = Qcp800_setupBeforePost
     Connection = DMIConsole.FDConnection
     SQL.Strings = (
       'SELECT * FROM cp800_setup')

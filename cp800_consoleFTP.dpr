@@ -13,8 +13,8 @@ uses
   TypeUnit in 'TypeUnit.pas',
   UnitFtpMonitor.WeightData in 'UnitFtpMonitor.WeightData.pas',
   MyThreadLog in '..\..\Common\MyThreadLog.pas',
-  funzioni in '..\..\Common\funzioni.pas'
-;
+  funzioni in '..\..\Common\funzioni.pas',
+  Frame.Service in 'Frame.Service.pas' {FrameService: TFrame};
 
 {$R *.res}
 

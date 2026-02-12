@@ -56,8 +56,15 @@ object MainForm: TMainForm
         ImageIndex = 1
         Style = tbsSeparator
       end
-      object LabelDBStatus: TLabel
+      object ToolButtonDeleteHistorical: TToolButton
         Left = 47
+        Top = 0
+        Caption = 'Delete historical'
+        ImageIndex = 2
+        OnClick = ToolButtonDeleteHistoricalClick
+      end
+      object LabelDBStatus: TLabel
+        Left = 86
         Top = 0
         Width = 150
         Height = 25
@@ -198,15 +205,6 @@ object MainForm: TMainForm
     OnException = ApplicationEvents1Exception
     Left = 400
     Top = 244
-  end
-  object ActionList1: TActionList
-    Images = ImageList1
-    Left = 312
-    Top = 76
-    object ActionConfigurazione: TAction
-      Caption = 'Configurazione'
-      ImageIndex = 1
-    end
   end
   object ImageList1: TImageList
     Left = 544

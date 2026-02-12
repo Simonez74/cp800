@@ -436,9 +436,10 @@ begin
   FMonitor.OnLog := MonitorLog;
   FMonitor.OnError := MonitorError;
   FMonitor.OnStatus := FTPStatusHandler;
+
   // impostazioni
-  FMonitor.IntervalMs := FServerCfg.Intervall;
-  FMonitor.RemoteFileDownload :=  FServerCfg.FileName;
+//  FMonitor.IntervalMs := FServerCfg.Intervall;
+//  FMonitor.RemoteFileDownload :=  FServerCfg.FileName;
   FMonitor.Start;
 
   FIsRunning := True;
@@ -477,10 +478,6 @@ begin
 
   FMonitorWeight.RemoteFileDownload := FServerCfg.FileNameProd;
 
-  // NON chiamiamo .Start() qui.
-  // Il primo UpdateState (provocato dalla cambiata caption di lbl1102)
-  // calcola ShouldRun e, se serve, avvia il thread internamente
-  // tramite ApplyStateChange ? Start.
   AddLog(MemoProd, 'Weight Monitor initialised (waiting for program data...)');
 end;
        {
