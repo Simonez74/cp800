@@ -272,6 +272,9 @@ end;
 
 destructor TFrameCp800.Destroy;
 begin
+(*
+12/02/206
+
 // Assicurati che tutto sia fermo
   if not FIsShuttingDown then
     Shutdown;
@@ -281,6 +284,65 @@ begin
 
   if Assigned(FCodeMap) then
     FreeAndNil(FCodeMap);
+*)
+
+ FIsShuttingDown := True;
+
+  // DISCONNETTI eventi PRIMA
+  if Assigned(FMonitor) then
+  begin
+    FMonitor.OnParsed := nil;
+    FMonitor.OnLog := nil;
+    FMonitor.OnError := nil;
+    FMonitor.OnStatus := nil;
+  end;
+
+  if Assigned(FMonitorWeight) then
+  begin
+    FMonitorWeight.OnParsed := nil;
+    FMonitorWeight.OnLog := nil;
+    FMonitorWeight.OnError := nil;
+    FMonitorWeight.OnStatus := nil;
+    FMonitorWeight.OnWeight := nil;
+  end;
+
+  // SHUTDOWN dei monitor
+  try
+    Shutdown;
+  except
+  end;
+
+  // Questo forza il decremento del RefCount delle stringhe
+  FServerCfg.Inizializza ;
+
+
+  // Forza liberazione monitor (doppia protezione)
+  try
+    if Assigned(FMonitor) then
+      FreeAndNil(FMonitor);
+  except
+  end;
+
+  try
+    if Assigned(FMonitorWeight) then
+      FreeAndNil(FMonitorWeight);
+  except
+  end;
+
+  // Dizionari
+  try
+    if assigned(FLabelMap) then
+      FreeAndNil(FLabelMap);
+  except
+  end;
+
+  try
+    if Assigned(FCodeMap) then
+      FreeAndNil(FCodeMap);
+  except
+  end;
+
+
 
   inherited;
 end;
@@ -475,6 +537,10 @@ procedure TFrameCp800.AggiornaCondizioniLog;
 begin
   if not Assigned(FMonitorWeight) then
     Exit;
+
+  if FIsShuttingDown then  // ← Evita chiamate durante shutdown
+    Exit;
+
 
   FMonitorWeight.AggiornaCondizioni(
     lbl1102.Caption,                      // Programma lavoro
@@ -885,7 +951,7 @@ procedure TFrameCp800.MonitorParsed(Sender: TObject; APairs: TStringList);
 var
   key: string;
   val: string;
-  lbl: TLabel;
+////  lbl: TLabel;
   totSpeed : integer;
 begin
 

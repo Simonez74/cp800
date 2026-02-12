@@ -68,7 +68,7 @@ type
   public
     { Public declarations }
 
-    Function  CalcolaSessione ( const FlStart : boolean; Const IDCp800 : String ;Const NumeroProgramma : String) : integer; virtual;
+
     procedure ScriviRecordCp800Storico( CP800StoricoRecord :  TCP800StoricoRecord) ; virtual;
 
 
@@ -292,53 +292,6 @@ begin
   end;
 
 end;
-
-
-
-
-function TDMIConsole.CalcolaSessione(const FlStart : boolean; Const IDCp800 : String ; Const NumeroProgramma : String ): integer;
-var
-  QSessione : TFDQuery;
-begin
-  // se CP800StoricoRecord.Start = true significa che inizio lavoro
-  // per cui calcolo  session_id
-  result := 0;
-  QSessione := TFDQuery.Create(nil);
-  try
-    try
-      QSessione.Connection := FDConnection;
-      QSessione.sql.Add('select max(session_id) as NumSessionId from cp800Storico');
-      QSessione.sql.Add(' where cp800_ID = ' + QuotedStr(IDCp800) );
-      QSessione.sql.Add(' and NumProgram = ' + QuotedStr(NumeroProgramma) );
-      QSessione.sql.Add(' and Date(DataTime) = ' + quotedStr( FormatDateTime('yyyy-mm-dd' , now())));
-      if not Flstart then
-      QSessione.sql.Add(' and StartStop = 1 ');
-
-      QSessione.Open;
-      if not QSessione.eof then
-      begin
-        result:= QSessione.FieldByName('NumSessionId').AsInteger;
-        if Flstart then
-          result := result + 1;
-      end
-      else
-        result := 1;
-    except
-       on e: Exception do
-       begin
-         LogToFile('CalcolaSessione: ' + e.Message );
-//         raise;
-       end;
-    end;
-  finally
-    QSessione.free;
-  end;
-end;
-
-
-
-
-
 
 procedure TDMIConsole.ScriviRecordCp800Storico(CP800StoricoRecord: TCP800StoricoRecord);
 var

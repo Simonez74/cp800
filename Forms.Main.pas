@@ -48,13 +48,13 @@ const
 
 type
 
-  TMioTabSheet = class (TTabSheet)
+ { TMioTabSheet = class (TTabSheet)
   private
     FIdCp800 : String;
   public
     property idCp800 : String read FIdCp800 write FIdCp800;
   end;
-
+  }
 
 
   TMainForm = class(TForm)
@@ -66,14 +66,11 @@ type
     ToolBar1: TToolBar;
     ToolButtonConfig: TToolButton;
     ToolButton1: TToolButton;
-    ToolButtonRefresh: TToolButton;
     PanelConfig: TPanel;
     ImageList1: TImageList;
-    ToolButton2: TToolButton;
     LabelDBStatus: TLabel;
     PanelMain: TPanel;
     StatusBar1: TStatusBar;
-    ActionRefresh: TAction;
 
     // pannello connessione
     PanelConnection: TPanel;
@@ -87,7 +84,6 @@ type
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormDestroy(Sender: TObject);
     procedure ApplicationEvents1Exception(Sender: TObject; E: Exception);
-    procedure ActionRefreshExecute(Sender: TObject);
     procedure ButtonRetryConnectionClick(Sender: TObject);
     procedure ToolButtonConfigClick(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
@@ -124,7 +120,7 @@ type
 
   public
     { Public declarations }
-    procedure RefreshAll;
+
   end;
 
 var
@@ -322,17 +318,22 @@ var
   QAppo : TFDQuery;
   LCountCp800 : integer;
   FFrame : TFrameCp800;
-  TabSheet: TMioTabSheet;
+//  TabSheet: TMioTabSheet;
+  TabSheet: TTabSheet;
   IpForFile : String;
-  FNameFile : String;
-  FNameFileProd : String;
+//  FNameFile : String;
+//  FNameFileProd : String;
   ServerCfg: TServerConfig;
+  FtpPath  : string;
 begin
   if not FDatabaseConnected then
   begin
     ShowMessage('Database non connesso. Impossibile caricare le macchine.');
     Exit;
   end;
+
+  ServerCfg.Inizializza;
+
   // --- 1) Crea la mappa codici (condivisa tra i due monitor)
   FFrameList.Clear;
 
@@ -357,48 +358,53 @@ begin
 
     while not QAppo.EOF do
     begin
-      TabSheet := TMioTabSheet.Create(MainPageControl);
+//      TabSheet := TMioTabSheet.Create(MainPageControl);
+      TabSheet := TTabSheet.Create(MainPageControl);
       TabSheet.Caption := Qappo.FieldByName('cp800_Name').AsString;
-      TabSheet.idCp800 := QAppo.FieldByName('cp800_id').asstring;
+//      TabSheet.idCp800 := QAppo.FieldByName('cp800_id').asstring;
       TabSheet.PageControl := MainPageControl;
-      TabSheet.Color:= $00FCE7BE;
+//      TabSheet.Color:= $00FCE7BE;
 
 //      FFrame := TFrameCp800.Create(TabSheet,  QAppo.FieldByName('cp800_id').asstring);
 //      FFrame := TFrameCp800.Create( TabSheet );
+
+
+
+
       FFrame := TFrameCp800.Create( nil );
       FFrame.Align := alClient;
       FFrame.Parent := TabSheet;
       fframe.Name := Format('ServerFrame_%d', [FFrameList.Count + 1]);
       //     FFrame.Cp800id :=  QAppo.FieldByName('cp800_id').asstring ;
+
+
+
       try
+
         IpForFile := QAppo.FieldByName('cp800_ip').asstring;
         while  Pos('.',IpForFile) > 0 do
           IpForFile := copy ( IpForFile, Pos('.',IpForFile) +1 , length(IpForFile ));
         if length(IpForFile ) < 3 then
           IpForFile:= concat( StringOfChar('0', 3 - length(IpForFile )) , IpForFile )  ;
 
-        FNameFile:= concat ( StartFileName, IpForFile, '.txt');
-        FNameFileProd:=  concat ( StartFileProdName, IpForFile, '.txt');
+//        FNameFile:= concat ( StartFileName, IpForFile, '.txt');
+//        FNameFileProd:=  concat ( StartFileProdName, IpForFile, '.txt');
 
-        if QAppo.FieldByName('FtpPath').AsString.EndsWith('/') then
-        begin
-          FNameFile := QAppo.FieldByName('FtpPath').AsString+  FNameFile;
-          FNameFileProd := QAppo.FieldByName('FtpPath').AsString+  FNameFileProd;
-        end
-        else
-        begin
-          FNameFile := QAppo.FieldByName('FtpPath').AsString+ '/' + FNameFile ;
-          FNameFileProd := QAppo.FieldByName('FtpPath').AsString+ '/' + FNameFileProd;
-        end;
+        FtpPath := QAppo.FieldByName('FtpPath').AsString;
+        if not FtpPath.EndsWith('/') then
+          FtpPath := FtpPath + '/';
+
+
         var Lhost := QAppo.FieldByName('cp800_ip').asstring;
+
         ServerCfg.Host := lhost;
 //        ServerCfg.Host := QAppo.FieldByName('cp800_ip').asstring;
         ServerCfg.Port := QAppo.FieldByName('FtpPort').AsInteger;
         ServerCfg.Username := QAppo.FieldByName('FtpUser').AsString;
         ServerCfg.Password := QAppo.FieldByName('FtpPassword').AsString;
         ServerCfg.RemotePath :=  QAppo.FieldByName('FtpPath').AsString;
-        ServerCfg.FileName := FNameFile;
-        ServerCfg.FileNameProd := FNameFileProd;
+        ServerCfg.FileName  := FtpPath + concat ( StartFileName, IpForFile, '.txt');
+        ServerCfg.FileNameProd := FtpPath + concat ( StartFileProdName, IpForFile, '.txt');
         ServerCfg.id := QAppo.FieldByName('cp800_id').asstring;
         ServerCfg.NameMachine :=QAppo.FieldByName('cp800_name').asstring;
         ServerCfg.Intervall := QAppo.FieldByName('FtpIdle').AsInteger;
@@ -417,10 +423,11 @@ begin
           //   2. Chiama InitWeightMonitor → crea FMonitorWeight (dati pesi) ma NON lo avvia
           //   3. FMonitorWeight parte automaticamente quando le label vengono populate
           // ═══════════════════════════════════════════════════════════════════
-          Fframe.Start;
+         Fframe.Start;
           //  InitWeightMonitor viene chiamato dentro Start() e il monitor dei pesi
           // parte automaticamente quando serve.
           FFrameList.Add(FFrame);
+
       except
         on E: Exception do
         begin
@@ -575,55 +582,7 @@ begin
   UpdateStatusBar;
 end;
 
-procedure TMainForm.RefreshAll;
-begin
-  if not FDatabaseConnected then
-  begin
-    if MessageDlg('Database non connesso. Tentare la riconnessione?',
-                  mtConfirmation, [mbYes, mbNo], 0) = mrYes then
-    begin
-      ButtonRetryConnectionClick(nil);
-    end;
-    Exit;
-  end;
 
-  // Pulisco frame esistenti con protezione eccezioni
-  try
-    FFrameList.Clear;
-  except
-    on E: Exception do
-    begin
-      LogToFile('Errore durante Clear frame list: ' + E.Message);
-      // Forza svuotamento anche in caso di errore
-      try
-        while FFrameList.Count > 0 do
-          FFrameList.Delete(0);
-      except
-      end;
-    end;
-  end;
-
-   // Pulisci tabs
-  try
-    while MainPageControl.PageCount > 0 do
-      MainPageControl.Pages[0].Free;
-  except
-    on E: Exception do
-      LogToFile('Errore durante Clear tab pages: ' + E.Message);
-  end;
-
-
-  // Ricarica
-  try
-    CreatePanels;
-  except
-    on E: Exception do
-    begin
-      ShowMessage('Errore durante il refresh: ' + E.Message);
-      LogToFile('Errore RefreshAll: ' + E.Message);
-    end;
-  end;
-end;
 
 procedure TMainForm.RestartAllMonitors;
 // (magari per un bottone "Restart" futuro)
@@ -922,11 +881,6 @@ begin
   ToggleConfigPanel;
 end;
 
-procedure TMainForm.ActionRefreshExecute(Sender: TObject);
-begin
-  RefreshAll;
-end;
-
 procedure TMainForm.ApplicationEvents1Exception(Sender: TObject; E: Exception);
 var
   ErrorMsg: string;
@@ -1086,8 +1040,8 @@ end;
 //   3) FormDestroy     → libero le liste (già vuote)
 // =================================================================
 procedure TMainForm.FormClose(Sender: TObject; var Action: TCloseAction);
-var
-  i : integer;
+//var
+//  i : integer;
 begin
   FIsClosing := True;
 

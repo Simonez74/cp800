@@ -56,23 +56,8 @@ object MainForm: TMainForm
         ImageIndex = 1
         Style = tbsSeparator
       end
-      object ToolButtonRefresh: TToolButton
-        Left = 47
-        Top = 0
-        Action = ActionRefresh
-        ParentShowHint = False
-        ShowHint = True
-      end
-      object ToolButton2: TToolButton
-        Left = 86
-        Top = 0
-        Width = 8
-        Caption = 'ToolButton2'
-        ImageIndex = 3
-        Style = tbsSeparator
-      end
       object LabelDBStatus: TLabel
-        Left = 94
+        Left = 47
         Top = 0
         Width = 150
         Height = 25
@@ -220,11 +205,7 @@ object MainForm: TMainForm
     Top = 76
     object ActionConfigurazione: TAction
       Caption = 'Configurazione'
-    end
-    object ActionRefresh: TAction
-      Caption = 'Ricarica'
-      ImageIndex = 0
-      OnExecute = ActionRefreshExecute
+      ImageIndex = 1
     end
   end
   object ImageList1: TImageList

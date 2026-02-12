@@ -92,15 +92,18 @@ end;
 
 { TWeightFtpMonitor }
 constructor TWeightFtpMonitor.Create(const AServerCfg : TServerConfig; const ACodeMap: TDictionary<string,string> );
-var
-  appPath, weightPath: string;
+//var
+//  appPath, weightPath: string;
 begin
   inherited Create(AServerCfg, ACodeMap);
 
-  appPath := ExtractFilePath(ParamStr(0));
-  weightPath := TPath.Combine(appPath, 'Weight', AServerCfg.NameMachine);
+//  appPath := ExtractFilePath(ParamStr(0));
+//  weightPath := TPath.Combine(appPath, 'Weight', AServerCfg.NameMachine);
 
-  FBaseOutputPath := weightPath;
+//  appPath := ExtractFilePath(ParamStr(0));
+//  weightPath := TPath.Combine(ExtractFilePath(ParamStr(0)), 'Weight', AServerCfg.NameMachine);
+
+  FBaseOutputPath := TPath.Combine(ExtractFilePath(ParamStr(0)), 'Weight', AServerCfg.NameMachine);
 
   FStateLock := TCriticalSection.Create;
 

@@ -505,7 +505,8 @@ procedure TFtpMonitor.DoQueueParsed(const APairs: TStringList);
 var
 //  rawCopy,  copyPairs, filteredCopy: TStringList;
   FilteredPairs : TStringList ;
-  wk, watchedKey: string;
+//  wk, watchedKey: string;
+
 //  shouldWrite: Boolean;
   i: Integer;
 //  key, val, readable: string;

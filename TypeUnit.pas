@@ -28,6 +28,8 @@ type
     NameMachine : String;
     Intervall : integer;
     PassiveMode : boolean;
+
+    procedure Inizializza;
   end;
 
   TServerData = record
@@ -140,6 +142,24 @@ end;
 function TSituazioneXLog.IsValid: Boolean;
 begin
   Result := (DsProgram <> '') and (OutputFileName <> '');
+end;
+
+{ TServerConfig }
+
+procedure TServerConfig.Inizializza;
+begin
+  Host := string.Empty;
+  Port := 0;
+  Username := string.Empty;
+  Password := string.Empty;
+  RemotePath := string.Empty;
+  FileName := string.Empty;
+  FileNameProd:= string.Empty;
+  Id := string.Empty;
+  NameMachine := String.Empty;
+  Intervall := 0;
+  PassiveMode := true;
+
 end;
 
 end.

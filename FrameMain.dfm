@@ -18,7 +18,6 @@ object FrameCp800: TFrameCp800
     Color = 16574398
     ParentColor = False
     TabOrder = 0
-    ExplicitWidth = 660
     object PanelMenu: TPanel
       Left = 0
       Top = 0
@@ -29,7 +28,6 @@ object FrameCp800: TFrameCp800
       Color = 16574398
       ParentBackground = False
       TabOrder = 0
-      ExplicitWidth = 656
       object VirtualImage2: TVirtualImage
         Left = 4
         Top = 3
@@ -54,7 +52,6 @@ object FrameCp800: TFrameCp800
       Color = 16574398
       ParentBackground = False
       TabOrder = 1
-      ExplicitWidth = 656
       object CardAltriDati: TCard
         Left = 1
         Top = 1
@@ -94,7 +91,6 @@ object FrameCp800: TFrameCp800
             '')
           ScrollBars = ssVertical
           TabOrder = 0
-          ExplicitWidth = 654
         end
         object MemoProd: TMemo
           Left = 0
@@ -107,7 +103,6 @@ object FrameCp800: TFrameCp800
           ReadOnly = True
           ScrollBars = ssVertical
           TabOrder = 1
-          ExplicitWidth = 654
         end
       end
       object CardDati: TCard
@@ -119,7 +114,6 @@ object FrameCp800: TFrameCp800
         CardIndex = 1
         ParentColor = True
         TabOrder = 1
-        ExplicitWidth = 654
         object StatusBar: TStatusBar
           Left = 0
           Top = 463
@@ -132,7 +126,6 @@ object FrameCp800: TFrameCp800
             item
               Width = 50
             end>
-          ExplicitWidth = 654
         end
         object Panel6: TPanel
           Left = 0
@@ -150,7 +143,6 @@ object FrameCp800: TFrameCp800
           ParentBackground = False
           ParentFont = False
           TabOrder = 1
-          ExplicitWidth = 654
           object LabelProgramNo: TLabel
             Left = 14
             Top = 4
