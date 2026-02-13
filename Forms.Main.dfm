@@ -108,79 +108,6 @@ object MainForm: TMainForm
       Align = alClient
       TabOrder = 0
     end
-    object PanelConnection: TPanel
-      Left = 198
-      Top = 192
-      Width = 400
-      Height = 280
-      BevelOuter = bvNone
-      BorderWidth = 2
-      BorderStyle = bsSingle
-      Color = clWhite
-      ParentBackground = False
-      TabOrder = 1
-      Visible = False
-      object LabelConnectionStatus: TLabel
-        AlignWithMargins = True
-        Left = 12
-        Top = 12
-        Width = 372
-        Height = 15
-        Margins.Left = 10
-        Margins.Top = 10
-        Margins.Right = 10
-        Margins.Bottom = 0
-        Align = alTop
-        Caption = 'Connessione al database in corso...'
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -12
-        Font.Name = 'Segoe UI'
-        Font.Style = [fsBold]
-        ParentFont = False
-        ExplicitWidth = 188
-      end
-      object AnimationConnection: TActivityIndicator
-        Left = 176
-        Top = 48
-        IndicatorSize = aisXLarge
-      end
-      object MemoConnectionError: TMemo
-        AlignWithMargins = True
-        Left = 12
-        Top = 175
-        Width = 372
-        Height = 89
-        Margins.Left = 10
-        Margins.Top = 10
-        Margins.Right = 10
-        Margins.Bottom = 10
-        Align = alBottom
-        BorderStyle = bsNone
-        Color = 15790320
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -12
-        Font.Name = 'Consolas'
-        Font.Style = []
-        Lines.Strings = (
-          '')
-        ParentFont = False
-        ReadOnly = True
-        ScrollBars = ssVertical
-        TabOrder = 1
-        Visible = False
-      end
-      object ButtonRetryConnection: TButton
-        Left = 158
-        Top = 125
-        Width = 100
-        Height = 25
-        Caption = 'Retry'
-        TabOrder = 2
-        OnClick = ButtonRetryConnectionClick
-      end
-    end
   end
   object StatusBar1: TStatusBar
     Left = 0
@@ -200,6 +127,79 @@ object MainForm: TMainForm
       item
         Width = 50
       end>
+  end
+  object PanelConnection: TPanel
+    Left = 198
+    Top = 192
+    Width = 400
+    Height = 280
+    BevelOuter = bvNone
+    BorderWidth = 2
+    BorderStyle = bsSingle
+    Color = clWhite
+    ParentBackground = False
+    TabOrder = 4
+    Visible = False
+    object LabelConnectionStatus: TLabel
+      AlignWithMargins = True
+      Left = 12
+      Top = 12
+      Width = 372
+      Height = 15
+      Margins.Left = 10
+      Margins.Top = 10
+      Margins.Right = 10
+      Margins.Bottom = 0
+      Align = alTop
+      Caption = 'Connessione al database in corso...'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -12
+      Font.Name = 'Segoe UI'
+      Font.Style = [fsBold]
+      ParentFont = False
+      ExplicitWidth = 188
+    end
+    object AnimationConnection: TActivityIndicator
+      Left = 176
+      Top = 48
+      IndicatorSize = aisXLarge
+    end
+    object MemoConnectionError: TMemo
+      AlignWithMargins = True
+      Left = 12
+      Top = 175
+      Width = 372
+      Height = 89
+      Margins.Left = 10
+      Margins.Top = 10
+      Margins.Right = 10
+      Margins.Bottom = 10
+      Align = alBottom
+      BorderStyle = bsNone
+      Color = 15790320
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -12
+      Font.Name = 'Consolas'
+      Font.Style = []
+      Lines.Strings = (
+        '')
+      ParentFont = False
+      ReadOnly = True
+      ScrollBars = ssVertical
+      TabOrder = 1
+      Visible = False
+    end
+    object ButtonRetryConnection: TButton
+      Left = 158
+      Top = 125
+      Width = 100
+      Height = 25
+      Caption = 'Retry'
+      TabOrder = 2
+      OnClick = ButtonRetryConnectionClick
+    end
   end
   object ApplicationEvents1: TApplicationEvents
     OnException = ApplicationEvents1Exception

@@ -39,7 +39,7 @@ uses
   //MyThreadLog
   ,System.Threading
   ,DMI_Console,  TypeUnit, MyThreadLog,   funzioni
-  , system.DateUtils;
+  , system.DateUtils, Frame.Service;
 
 const
 //   FTPData_056.txt
@@ -91,6 +91,7 @@ type
     { Private declarations }
     FFrameList: TObjectList<TFrameCp800>;
     FFrameConfig: TFrameConfiguration;
+    FFrameService: TFrameService;
     FConfigManager: TConfigManager;
     FConfigVisible: Boolean;
     FDatabaseConnected: Boolean;
@@ -115,6 +116,11 @@ type
 
 
     procedure StopAllMonitors;
+
+    // callback per liberare FramService
+    procedure FrameServiceClose(Sender : TObject);
+
+
   public
     { Public declarations }
 
@@ -179,6 +185,26 @@ begin
   ShowConnectionPanel('Connessione al database in corso...', False);
 
   ConnectToDatabase;
+end;
+
+procedure TMainForm.FrameServiceClose(Sender: TObject);
+begin
+
+
+  // Nascondo pannello configurazione
+  PanelConfig.Visible := False;
+  PanelMain.Visible := True;
+  PanelMain.BringToFront;
+
+{   TThread.Queue(nil,
+    procedure
+    begin
+      if assigned (FFrameService ) then
+        FreeAndNil(FFrameService );
+    end);
+    }
+ //   if assigned (FFrameService ) then
+//    FreeAndNil(FFrameService );
 end;
 
 procedure TMainForm.ShowConnectionPanel(const AMessage: string; AShowRetry: Boolean);
@@ -869,11 +895,16 @@ end;
 
 procedure TMainForm.ToolButtonDeleteHistoricalClick(Sender: TObject);
 begin
-      // Crea frame configurazione
-  FFrameConfig := TFrameConfiguration.Create(Self);
-  FFrameConfig.Parent := PanelConfig;
-  FFrameConfig.Align := alClient;
-  FFrameConfig.SetConfigManager(FConfigManager);
+  // Creo frame Service
+  FFrameService := TFrameService.Create(nil);
+  FFrameService.Parent := PanelConfig;
+  FFrameService.Align := alClient;
+  FFrameService.OnCloseRequest := FrameServiceClose;
+
+  PanelConfig.Visible := True;
+  PanelConfig.Align := alClient;
+  PanelConfig.BringToFront;
+  PanelMain.Visible := False;
 end;
 
 procedure TMainForm.ApplicationEvents1Exception(Sender: TObject; E: Exception);
