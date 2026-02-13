@@ -189,22 +189,42 @@ end;
 
 procedure TMainForm.FrameServiceClose(Sender: TObject);
 begin
-
+  // nascondo il frame
+  if Assigned(FFrameService) then
+    FFrameService.Visible := False;
 
   // Nascondo pannello configurazione
   PanelConfig.Visible := False;
   PanelMain.Visible := True;
   PanelMain.BringToFront;
 
-{   TThread.Queue(nil,
+  ToolButtonConfig.Enabled := true;
+  ToolButtonDeleteHistorical.Enabled := true;
+
+
+  //   if assigned (FFrameService ) then
+//    FreeAndNil(FFrameService );
+
+  // Libero il frame dopo che tutti i messaggi sono stati processati
+{  TThread.ForceQueue(nil,
     procedure
     begin
-      if assigned (FFrameService ) then
-        FreeAndNil(FFrameService );
+      if Assigned(FFrameService) then
+      begin
+        try
+          FFrameService.Parent := nil;  // Importante: rimuovi il parent prima
+          FreeAndNil(FFrameService);
+          LogToFile('FrameService freed successfully');
+        except
+          on E: Exception do
+            LogToFile('Errore durante free FrameService: ' + E.Message);
+        end;
+      end;
     end);
-    }
- //   if assigned (FFrameService ) then
-//    FreeAndNil(FFrameService );
+ }
+
+
+
 end;
 
 procedure TMainForm.ShowConnectionPanel(const AMessage: string; AShowRetry: Boolean);
@@ -398,19 +418,12 @@ begin
       FFrame.Parent := TabSheet;
       fframe.Name := Format('ServerFrame_%d', [FFrameList.Count + 1]);
       //     FFrame.Cp800id :=  QAppo.FieldByName('cp800_id').asstring ;
-
-
-
       try
-
         IpForFile := QAppo.FieldByName('cp800_ip').asstring;
         while  Pos('.',IpForFile) > 0 do
           IpForFile := copy ( IpForFile, Pos('.',IpForFile) +1 , length(IpForFile ));
         if length(IpForFile ) < 3 then
           IpForFile:= concat( StringOfChar('0', 3 - length(IpForFile )) , IpForFile )  ;
-
-//        FNameFile:= concat ( StartFileName, IpForFile, '.txt');
-//        FNameFileProd:=  concat ( StartFileProdName, IpForFile, '.txt');
 
         FtpPath := QAppo.FieldByName('FtpPath').AsString;
         if not FtpPath.EndsWith('/') then
@@ -428,24 +441,21 @@ begin
         ServerCfg.Intervall := QAppo.FieldByName('FtpIdle').AsInteger;
         ServerCfg.PassiveMode := QAppo.FieldByName('FtpPassiveMode').AsBoolean;
 
-        Fframe.Configure( ServerCfg);
-  //      Fframe.ConfigureWeightMonitor(  ServerCfg.FileNameData,  'out_server21.csv', 500);
-  //      Fframe.ConfigureWeightMonitor( ServerCfg.FileNameData,  QAppo.FieldByName('FtpIdle').AsInteger);
+        Fframe.Configure( ServerCfg, FConfigManager.Config.BeltB,FConfigManager.Config.BeltC , FConfigManager.Config.BeltD );
 
+        // ═══════════════════════════════════════════════════════════════════
+        // AVVIA IL FRAME - tutto parte da qui!
+        // ═══════════════════════════════════════════════════════════════════
+        // Start() fa:
+        //   1. Crea FMonitor (dati generali) e lo avvia
+        //   2. Chiama InitWeightMonitor → crea FMonitorWeight (dati pesi) ma NON lo avvia
+        //   3. FMonitorWeight parte automaticamente quando le label vengono populate
+        // ═══════════════════════════════════════════════════════════════════
+        Fframe.Start;
+        //  InitWeightMonitor viene chiamato dentro Start() e il monitor dei pesi
+        // parte automaticamente quando serve.
 
-          // ═══════════════════════════════════════════════════════════════════
-          // AVVIA IL FRAME - tutto parte da qui!
-          // ═══════════════════════════════════════════════════════════════════
-          // Start() fa:
-          //   1. Crea FMonitor (dati generali) e lo avvia
-          //   2. Chiama InitWeightMonitor → crea FMonitorWeight (dati pesi) ma NON lo avvia
-          //   3. FMonitorWeight parte automaticamente quando le label vengono populate
-          // ═══════════════════════════════════════════════════════════════════
-          Fframe.Start;
-          //  InitWeightMonitor viene chiamato dentro Start() e il monitor dei pesi
-          // parte automaticamente quando serve.
-
-          FFrameList.Add(FFrame);
+        FFrameList.Add(FFrame);
 
       except
         on E: Exception do
@@ -895,16 +905,24 @@ end;
 
 procedure TMainForm.ToolButtonDeleteHistoricalClick(Sender: TObject);
 begin
-  // Creo frame Service
-  FFrameService := TFrameService.Create(nil);
-  FFrameService.Parent := PanelConfig;
-  FFrameService.Align := alClient;
-  FFrameService.OnCloseRequest := FrameServiceClose;
+  // Creo frame Service solo se non esiste
+  if not Assigned(FFrameService) then
+  begin
+//    FFrameService := TFrameService.Create(nil);
+    FFrameService := TFrameService.Create(self);
+    FFrameService.Parent := PanelConfig;
+    FFrameService.Align := alClient;
+    FFrameService.OnCloseRequest := FrameServiceClose;
+  end;
 
   PanelConfig.Visible := True;
   PanelConfig.Align := alClient;
   PanelConfig.BringToFront;
   PanelMain.Visible := False;
+
+  ToolButtonConfig.Enabled := false;
+  ToolButtonDeleteHistorical.Enabled := false;
+
 end;
 
 procedure TMainForm.ApplicationEvents1Exception(Sender: TObject; E: Exception);

@@ -8903,6 +8903,14 @@ object FrameCp800: TFrameCp800
             TabOrder = 1
             OnClick = BtnStartClick
           end
+          object PanelBeltBenabled: TPanel
+            Left = 489
+            Top = 344
+            Width = 185
+            Height = 41
+            Caption = 'PanelBeltBenabled'
+            TabOrder = 2
+          end
         end
       end
       object CardStorico: TCard

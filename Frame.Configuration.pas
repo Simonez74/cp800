@@ -10,7 +10,7 @@ uses
   FireDAC.DApt, FireDAC.Comp.DataSet, FireDAC.Comp.Client
   ,ConfigManager
   , DMI_Console
-  ,system.UITypes
+  ,system.UITypes, VCLTee.TeCanvas, Vcl.NumberBox, Vcl.ControlList, System.ImageList, Vcl.ImgList, funzioni
   ;
 
 type
@@ -44,10 +44,6 @@ type
     DBEditIdle: TDBEdit;
     DBFTpPath: TDBEdit;
     DBCheckBox1: TDBCheckBox;
-    TsServizi: TTabSheet;
-    Memo1: TMemo;
-    DeleteOlds_DateTimePicker: TDateTimePicker;
-    ButDeleteOlds: TButton;
     lbl1: TLabel;
     EdMySqlIP: TEdit;
     lbl2: TLabel;
@@ -64,22 +60,23 @@ type
     MemoDBInfo: TMemo;
     PanelConfigHeader: TPanel;
     LabelConfigTitle: TLabel;
-    ButtonApply: TButton;
-    ButtonSave: TButton;
-    ButtonCancel: TButton;
     DBEdit1: TDBEdit;
     DBEdit2: TDBEdit;
     Label1: TLabel;
     CbBeltB: TCheckBox;
     CbBeltC: TCheckBox;
     CbBeltD: TCheckBox;
+    Panel1: TPanel;
+    ButtonApply: TButton;
+    ButtonSave: TButton;
+    ButtonCancel: TButton;
+    ImageList1: TImageList;
     procedure ButtonTestDBClick(Sender: TObject);
     procedure ButtonApplyClick(Sender: TObject);
     procedure ButtonSaveClick(Sender: TObject);
     procedure ButtonCancelClick(Sender: TObject);
     procedure PageControlChanging(Sender: TObject; var AllowChange: Boolean);
     procedure PageControlChange(Sender: TObject);
-    procedure ButDeleteOldsClick(Sender: TObject);
     procedure Qcp800_setupBeforePost(DataSet: TDataSet);
   private
     { Private declarations }
@@ -221,34 +218,6 @@ if not Assigned(FConfigManager) then
 end;
 
 
-procedure TFrameConfiguration.ButDeleteOldsClick(Sender: TObject);
-var
-  Ldate: string;
-  QDelete : TFDQuery;
-begin
-  qdelete := TFDQuery.Create(nil);
-  try
-    QDelete.Connection := DMIConsole.FDConnection;
-    try
-      ldate := FormatDateTime('yyyy/mm/dd',  DeleteOlds_DateTimePicker.date );
-  //    LDate :=  IntToStr(DateToyyyymmdd(DeleteOlds_DateTimePicker.Date));
-      QDelete.SQL.Clear;
-      QDelete.sql.Add('delete from cp800Storico ');
-      QDelete.sql.Add('where ');
-      QDelete.sql.Add(' Date(DataTime) <  ' + quotedstr(LDate) );
-
-      QDelete.ExecSQL;
-    except
-      on E: Exception do
-      begin
-        showmessage('Error on deleting: ' + E.Message);
-      end;
-    end;
-  finally
-    QDelete.Free;
-  end;
-end;
-
 procedure TFrameConfiguration.ButtonApplyClick(Sender: TObject);
 begin
   ApplyConfiguration;
@@ -258,8 +227,8 @@ procedure TFrameConfiguration.ButtonCancelClick(Sender: TObject);
 begin
   if Modified then
   begin
-    if MessageDlg('There are unsaved changes. Discard ?',
-                  mtConfirmation, [mbYes, mbNo], 0) = mrYes then
+    if AskConfirmation( 'There are unsaved changes. Discard ?',
+                       [], 5000) = mrYes then
     begin
       LoadConfiguration;  // Ricarica configurazione originale
       Modified := False;

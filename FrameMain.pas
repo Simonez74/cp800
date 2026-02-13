@@ -176,6 +176,7 @@ type
     Bevel2: TBevel;
     Bevel3: TBevel;
     Bevel4: TBevel;
+    PanelBeltBenabled: TPanel;
     procedure BtnDatiClick(Sender: TObject);
     procedure VirtualImage2Click(Sender: TObject);
     procedure lbl5001CaptionChange(Sender: TObject; const NewCaption: string);
@@ -245,7 +246,7 @@ type
 //    constructor Create(AOwner: TComponent; const FCp800Id: string); reintroduce;
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
-    procedure Configure(Const AServerCfg : TServerConfig );
+    procedure Configure(Const AServerCfg : TServerConfig; const BeltBenabled : boolean; const BeltCenabled : boolean; const BeltDEnabled : boolean );
     procedure Start;
 //    procedure Stop;
     procedure Shutdown;
@@ -348,7 +349,7 @@ begin
 end;
 
 
-procedure TFrameCp800.Configure(Const AServerCfg : TServerConfig );
+procedure TFrameCp800.Configure(Const AServerCfg : TServerConfig ; const BeltBenabled : boolean; const BeltCenabled : boolean; const BeltDEnabled : boolean );
 var
   i :integer;
 begin
@@ -364,6 +365,10 @@ begin
     if ( Components[ i ] is TLabel ) AND ( Components[ i ].Tag > 0 ) then
       (Components[ i ] as TLabel ).Caption :=string.empty;
   end;
+
+
+
+
 
   // Costruisco la mappa codice ? label (va dopo il reset delle caption)
   BuildLabelMap;
