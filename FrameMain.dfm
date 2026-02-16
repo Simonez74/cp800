@@ -2,8 +2,8 @@ object FrameCp800: TFrameCp800
   Left = 0
   Top = 0
   Width = 836
-  Height = 510
-  Constraints.MinHeight = 510
+  Height = 450
+  Constraints.MinHeight = 450
   Constraints.MinWidth = 700
   Color = clBtnFace
   ParentBackground = False
@@ -13,11 +13,12 @@ object FrameCp800: TFrameCp800
     Left = 100
     Top = 0
     Width = 736
-    Height = 510
+    Height = 450
     Align = alClient
     Color = 16574398
     ParentColor = False
     TabOrder = 0
+    ExplicitHeight = 510
     object PanelMenu: TPanel
       Left = 0
       Top = 0
@@ -45,22 +46,24 @@ object FrameCp800: TFrameCp800
       Left = 0
       Top = 22
       Width = 732
-      Height = 484
+      Height = 424
       Align = alClient
       ActiveCard = CardDati
       Caption = 'CardPanel1'
       Color = 16574398
       ParentBackground = False
       TabOrder = 1
+      ExplicitHeight = 484
       object CardAltriDati: TCard
         Left = 1
         Top = 1
         Width = 730
-        Height = 482
+        Height = 422
         Caption = 'Altri Dati'
         CardIndex = 0
         ParentColor = True
         TabOrder = 0
+        ExplicitHeight = 482
         object Splitter1: TSplitter
           Left = 0
           Top = 229
@@ -72,7 +75,7 @@ object FrameCp800: TFrameCp800
         end
         object Splitter2: TSplitter
           Left = 0
-          Top = 479
+          Top = 419
           Width = 730
           Height = 3
           Cursor = crVSplit
@@ -95,27 +98,29 @@ object FrameCp800: TFrameCp800
           Left = 0
           Top = 232
           Width = 730
-          Height = 247
+          Height = 187
           Align = alClient
           Lines.Strings = (
             '')
           ReadOnly = True
           ScrollBars = ssVertical
           TabOrder = 1
+          ExplicitHeight = 247
         end
       end
       object CardDati: TCard
         Left = 1
         Top = 1
         Width = 730
-        Height = 482
+        Height = 422
         Caption = 'CardDati'
         CardIndex = 1
         ParentColor = True
         TabOrder = 1
+        ExplicitHeight = 482
         object StatusBar: TStatusBar
           Left = 0
-          Top = 463
+          Top = 403
           Width = 730
           Height = 19
           Panels = <
@@ -125,12 +130,13 @@ object FrameCp800: TFrameCp800
             item
               Width = 50
             end>
+          ExplicitTop = 463
         end
-        object Panel6: TPanel
+        object PanelMain: TPanel
           Left = 0
           Top = 0
           Width = 730
-          Height = 463
+          Height = 403
           Align = alClient
           BevelOuter = bvNone
           Color = 16574398
@@ -142,13 +148,25 @@ object FrameCp800: TFrameCp800
           ParentBackground = False
           ParentFont = False
           TabOrder = 1
+          ExplicitHeight = 463
+          DesignSize = (
+            730
+            403)
+          object Bevel1: TBevel
+            Left = 0
+            Top = 344
+            Width = 730
+            Height = 59
+            Align = alBottom
+            Shape = bsFrame
+          end
           object Bevel2: TBevel
             Left = 0
             Top = 168
             Width = 730
-            Height = 245
+            Height = 176
             Align = alClient
-            ExplicitTop = 169
+            ExplicitHeight = 201
           end
           object Bevel3: TBevel
             Left = 0
@@ -245,21 +263,6 @@ object FrameCp800: TFrameCp800
             ParentColor = False
             ParentFont = False
             Transparent = False
-          end
-          object LabelStatus: TLabel
-            Left = 16
-            Top = 347
-            Width = 28
-            Height = 13
-            Caption = 'State'
-            Font.Charset = ANSI_CHARSET
-            Font.Color = clWindowText
-            Font.Height = -11
-            Font.Name = 'Arial'
-            Font.Pitch = fpVariable
-            Font.Style = [fsBold, fsItalic]
-            Font.Quality = fqDraft
-            ParentFont = False
           end
           object Image1: TImage
             Left = 332
@@ -8168,63 +8171,6 @@ object FrameCp800: TFrameCp800
             ParentFont = False
             Transparent = False
           end
-          object lbl4016: TLabel
-            Tag = 1
-            Left = 197
-            Top = 226
-            Width = 65
-            Height = 19
-            Alignment = taCenter
-            AutoSize = False
-            Caption = 'lbl4016'
-            Color = clSilver
-            Font.Charset = ANSI_CHARSET
-            Font.Color = clWindowText
-            Font.Height = -16
-            Font.Name = 'Arial'
-            Font.Style = [fsBold]
-            ParentColor = False
-            ParentFont = False
-            Transparent = False
-          end
-          object lbl4017: TLabel
-            Tag = 1
-            Left = 197
-            Top = 251
-            Width = 65
-            Height = 19
-            Alignment = taCenter
-            AutoSize = False
-            Caption = 'lbl4017'
-            Color = clSilver
-            Font.Charset = ANSI_CHARSET
-            Font.Color = clWindowText
-            Font.Height = -16
-            Font.Name = 'Arial'
-            Font.Style = [fsBold]
-            ParentColor = False
-            ParentFont = False
-            Transparent = False
-          end
-          object lbl4018: TLabel
-            Tag = 1
-            Left = 197
-            Top = 276
-            Width = 65
-            Height = 19
-            Alignment = taCenter
-            AutoSize = False
-            Caption = 'lbl4018'
-            Color = clSilver
-            Font.Charset = ANSI_CHARSET
-            Font.Color = clWindowText
-            Font.Height = -16
-            Font.Name = 'Arial'
-            Font.Style = [fsBold]
-            ParentColor = False
-            ParentFont = False
-            Transparent = False
-          end
           object lbl4019: TLabel
             Tag = 1
             Left = 274
@@ -8244,63 +8190,6 @@ object FrameCp800: TFrameCp800
             ParentFont = False
             Transparent = False
           end
-          object lbl4020: TLabel
-            Tag = 28
-            Left = 274
-            Top = 226
-            Width = 172
-            Height = 19
-            Alignment = taCenter
-            AutoSize = False
-            Caption = 'lbl4020'
-            Color = clSilver
-            Font.Charset = ANSI_CHARSET
-            Font.Color = clWindowText
-            Font.Height = -16
-            Font.Name = 'Arial'
-            Font.Style = [fsBold]
-            ParentColor = False
-            ParentFont = False
-            Transparent = False
-          end
-          object lbl4021: TLabel
-            Tag = 1
-            Left = 274
-            Top = 251
-            Width = 172
-            Height = 19
-            Alignment = taCenter
-            AutoSize = False
-            Caption = 'lbl4021'
-            Color = clSilver
-            Font.Charset = ANSI_CHARSET
-            Font.Color = clWindowText
-            Font.Height = -16
-            Font.Name = 'Arial'
-            Font.Style = [fsBold]
-            ParentColor = False
-            ParentFont = False
-            Transparent = False
-          end
-          object lbl4022: TLabel
-            Tag = 1
-            Left = 274
-            Top = 276
-            Width = 172
-            Height = 19
-            Alignment = taCenter
-            AutoSize = False
-            Caption = 'lbl4022'
-            Color = clSilver
-            Font.Charset = ANSI_CHARSET
-            Font.Color = clWindowText
-            Font.Height = -16
-            Font.Name = 'Arial'
-            Font.Style = [fsBold]
-            ParentColor = False
-            ParentFont = False
-            Transparent = False
-          end
           object lbl4023: TLabel
             Tag = 1
             Left = 471
@@ -8310,63 +8199,6 @@ object FrameCp800: TFrameCp800
             Alignment = taCenter
             AutoSize = False
             Caption = 'lbl4023'
-            Color = clSilver
-            Font.Charset = ANSI_CHARSET
-            Font.Color = clWindowText
-            Font.Height = -16
-            Font.Name = 'Arial'
-            Font.Style = [fsBold]
-            ParentColor = False
-            ParentFont = False
-            Transparent = False
-          end
-          object lbl4024: TLabel
-            Tag = 1
-            Left = 471
-            Top = 226
-            Width = 172
-            Height = 19
-            Alignment = taCenter
-            AutoSize = False
-            Caption = 'lbl4024'
-            Color = clSilver
-            Font.Charset = ANSI_CHARSET
-            Font.Color = clWindowText
-            Font.Height = -16
-            Font.Name = 'Arial'
-            Font.Style = [fsBold]
-            ParentColor = False
-            ParentFont = False
-            Transparent = False
-          end
-          object lbl4025: TLabel
-            Tag = 1
-            Left = 471
-            Top = 251
-            Width = 172
-            Height = 19
-            Alignment = taCenter
-            AutoSize = False
-            Caption = 'lbl4025'
-            Color = clSilver
-            Font.Charset = ANSI_CHARSET
-            Font.Color = clWindowText
-            Font.Height = -16
-            Font.Name = 'Arial'
-            Font.Style = [fsBold]
-            ParentColor = False
-            ParentFont = False
-            Transparent = False
-          end
-          object lbl4026: TLabel
-            Tag = 1
-            Left = 471
-            Top = 276
-            Width = 172
-            Height = 19
-            Alignment = taCenter
-            AutoSize = False
-            Caption = 'lbl4026'
             Color = clSilver
             Font.Charset = ANSI_CHARSET
             Font.Color = clWindowText
@@ -8458,51 +8290,6 @@ object FrameCp800: TFrameCp800
             Width = 9
             Height = 18
             Caption = 'A'
-            Color = 16574399
-            Font.Charset = ANSI_CHARSET
-            Font.Color = clWindowText
-            Font.Height = -15
-            Font.Name = 'Arial'
-            Font.Style = [fsBold]
-            ParentColor = False
-            ParentFont = False
-          end
-          object LblBeltB: TLabel
-            Left = 24
-            Top = 226
-            Width = 11
-            Height = 18
-            Caption = 'B'
-            Color = 16574399
-            Font.Charset = ANSI_CHARSET
-            Font.Color = clWindowText
-            Font.Height = -15
-            Font.Name = 'Arial'
-            Font.Style = [fsBold]
-            ParentColor = False
-            ParentFont = False
-          end
-          object LblBeltC: TLabel
-            Left = 24
-            Top = 251
-            Width = 11
-            Height = 18
-            Caption = 'C'
-            Color = 16574399
-            Font.Charset = ANSI_CHARSET
-            Font.Color = clWindowText
-            Font.Height = -15
-            Font.Name = 'Arial'
-            Font.Style = [fsBold]
-            ParentColor = False
-            ParentFont = False
-          end
-          object LblBeltD: TLabel
-            Left = 24
-            Top = 276
-            Width = 11
-            Height = 18
-            Caption = 'D'
             Color = 16574399
             Font.Charset = ANSI_CHARSET
             Font.Color = clWindowText
@@ -8761,63 +8548,6 @@ object FrameCp800: TFrameCp800
             ParentFont = False
             Transparent = False
           end
-          object LblWeightC: TLabel
-            Tag = 2
-            Left = 64
-            Top = 251
-            Width = 112
-            Height = 19
-            Alignment = taCenter
-            AutoSize = False
-            Caption = 'LblWeightC'
-            Color = clSilver
-            Font.Charset = ANSI_CHARSET
-            Font.Color = clWindowText
-            Font.Height = -16
-            Font.Name = 'Arial'
-            Font.Style = [fsBold]
-            ParentColor = False
-            ParentFont = False
-            Transparent = False
-          end
-          object LblWeightD: TLabel
-            Tag = 2
-            Left = 64
-            Top = 276
-            Width = 112
-            Height = 19
-            Alignment = taCenter
-            AutoSize = False
-            Caption = 'LblWeightD'
-            Color = clSilver
-            Font.Charset = ANSI_CHARSET
-            Font.Color = clWindowText
-            Font.Height = -16
-            Font.Name = 'Arial'
-            Font.Style = [fsBold]
-            ParentColor = False
-            ParentFont = False
-            Transparent = False
-          end
-          object LblWeightB: TLabel
-            Tag = 2
-            Left = 64
-            Top = 226
-            Width = 112
-            Height = 19
-            Alignment = taCenter
-            AutoSize = False
-            Caption = 'LblWeightB'
-            Color = clSilver
-            Font.Charset = ANSI_CHARSET
-            Font.Color = clWindowText
-            Font.Height = -16
-            Font.Name = 'Arial'
-            Font.Style = [fsBold]
-            ParentColor = False
-            ParentFont = False
-            Transparent = False
-          end
           object lblTotSpeed: TLabel
             Left = 197
             Top = 310
@@ -8837,33 +8567,48 @@ object FrameCp800: TFrameCp800
             Transparent = False
             Layout = tlCenter
           end
-          object Bevel1: TBevel
-            Left = 0
-            Top = 413
-            Width = 730
-            Height = 50
-            Align = alBottom
-            Shape = bsFrame
-            ExplicitLeft = 148
-            ExplicitTop = 343
-            ExplicitWidth = 234
-          end
           object lbl5001: TSimonLabel
             Tag = 1
-            Left = 206
-            Top = 361
+            Left = 562
+            Top = 31
             Width = 56
             Height = 21
             Caption = 'lbl5001'
             Visible = False
             OnCaptionChange = lbl5001CaptionChange
           end
+          object Bevel4: TBevel
+            Left = 0
+            Top = 0
+            Width = 730
+            Height = 84
+            Align = alTop
+            ExplicitTop = 4
+            ExplicitWidth = 654
+          end
+          object LabelStatus: TLabel
+            Left = 11
+            Top = 350
+            Width = 28
+            Height = 13
+            Anchors = [akLeft, akBottom]
+            Caption = 'State'
+            Font.Charset = ANSI_CHARSET
+            Font.Color = clWindowText
+            Font.Height = -11
+            Font.Name = 'Arial'
+            Font.Pitch = fpVariable
+            Font.Style = [fsBold, fsItalic]
+            Font.Quality = fqDraft
+            ParentFont = False
+          end
           object lbl9001: TLabel
             Tag = 1
-            Left = 14
-            Top = 420
-            Width = 687
+            Left = 9
+            Top = 369
+            Width = 714
             Height = 28
+            Anchors = [akLeft, akRight, akBottom]
             AutoSize = False
             Caption = 'lbl9001'
             Color = 3795522
@@ -8876,40 +8621,302 @@ object FrameCp800: TFrameCp800
             ParentFont = False
             Transparent = False
           end
-          object Bevel4: TBevel
-            Left = 0
-            Top = 0
-            Width = 730
-            Height = 84
-            Align = alTop
-            ExplicitTop = 4
-            ExplicitWidth = 654
-          end
-          object BtnStop: TButton
-            Left = 115
-            Top = 368
-            Width = 75
-            Height = 20
-            Caption = 'Stop'
-            TabOrder = 0
-            OnClick = BtnStopClick
-          end
-          object BtnStart: TButton
-            Left = 34
-            Top = 366
-            Width = 75
-            Height = 25
-            Caption = 'Start'
-            TabOrder = 1
-            OnClick = BtnStartClick
-          end
           object PanelBeltBenabled: TPanel
-            Left = 489
-            Top = 344
-            Width = 185
-            Height = 41
-            Caption = 'PanelBeltBenabled'
+            Left = 3
+            Top = 223
+            Width = 698
+            Height = 25
+            BevelOuter = bvNone
+            TabOrder = 0
+            object LblBeltB: TLabel
+              Left = 21
+              Top = 3
+              Width = 11
+              Height = 18
+              Caption = 'B'
+              Color = 16574399
+              Font.Charset = ANSI_CHARSET
+              Font.Color = clWindowText
+              Font.Height = -15
+              Font.Name = 'Arial'
+              Font.Style = [fsBold]
+              ParentColor = False
+              ParentFont = False
+            end
+            object LblWeightB: TLabel
+              Tag = 2
+              Left = 61
+              Top = 3
+              Width = 112
+              Height = 19
+              Alignment = taCenter
+              AutoSize = False
+              Caption = 'LblWeightB'
+              Color = clSilver
+              Font.Charset = ANSI_CHARSET
+              Font.Color = clWindowText
+              Font.Height = -16
+              Font.Name = 'Arial'
+              Font.Style = [fsBold]
+              ParentColor = False
+              ParentFont = False
+              Transparent = False
+            end
+            object lbl4016: TLabel
+              Tag = 1
+              Left = 194
+              Top = 3
+              Width = 65
+              Height = 19
+              Alignment = taCenter
+              AutoSize = False
+              Caption = 'lbl4016'
+              Color = clSilver
+              Font.Charset = ANSI_CHARSET
+              Font.Color = clWindowText
+              Font.Height = -16
+              Font.Name = 'Arial'
+              Font.Style = [fsBold]
+              ParentColor = False
+              ParentFont = False
+              Transparent = False
+            end
+            object lbl4020: TLabel
+              Tag = 28
+              Left = 271
+              Top = 3
+              Width = 172
+              Height = 19
+              Alignment = taCenter
+              AutoSize = False
+              Caption = 'lbl4020'
+              Color = clSilver
+              Font.Charset = ANSI_CHARSET
+              Font.Color = clWindowText
+              Font.Height = -16
+              Font.Name = 'Arial'
+              Font.Style = [fsBold]
+              ParentColor = False
+              ParentFont = False
+              Transparent = False
+            end
+            object lbl4024: TLabel
+              Tag = 1
+              Left = 468
+              Top = 3
+              Width = 172
+              Height = 19
+              Alignment = taCenter
+              AutoSize = False
+              Caption = 'lbl4024'
+              Color = clSilver
+              Font.Charset = ANSI_CHARSET
+              Font.Color = clWindowText
+              Font.Height = -16
+              Font.Name = 'Arial'
+              Font.Style = [fsBold]
+              ParentColor = False
+              ParentFont = False
+              Transparent = False
+            end
+          end
+          object PanelBeltCenabled: TPanel
+            Left = 3
+            Top = 251
+            Width = 698
+            Height = 26
+            BevelOuter = bvNone
+            TabOrder = 1
+            object LblBeltC: TLabel
+              Left = 21
+              Top = 4
+              Width = 11
+              Height = 18
+              Caption = 'C'
+              Color = 16574399
+              Font.Charset = ANSI_CHARSET
+              Font.Color = clWindowText
+              Font.Height = -15
+              Font.Name = 'Arial'
+              Font.Style = [fsBold]
+              ParentColor = False
+              ParentFont = False
+            end
+            object LblWeightC: TLabel
+              Tag = 2
+              Left = 61
+              Top = 3
+              Width = 112
+              Height = 19
+              Alignment = taCenter
+              AutoSize = False
+              Caption = 'LblWeightC'
+              Color = clSilver
+              Font.Charset = ANSI_CHARSET
+              Font.Color = clWindowText
+              Font.Height = -16
+              Font.Name = 'Arial'
+              Font.Style = [fsBold]
+              ParentColor = False
+              ParentFont = False
+              Transparent = False
+            end
+            object lbl4017: TLabel
+              Tag = 1
+              Left = 194
+              Top = 3
+              Width = 65
+              Height = 19
+              Alignment = taCenter
+              AutoSize = False
+              Caption = 'lbl4017'
+              Color = clSilver
+              Font.Charset = ANSI_CHARSET
+              Font.Color = clWindowText
+              Font.Height = -16
+              Font.Name = 'Arial'
+              Font.Style = [fsBold]
+              ParentColor = False
+              ParentFont = False
+              Transparent = False
+            end
+            object lbl4021: TLabel
+              Tag = 1
+              Left = 271
+              Top = 3
+              Width = 172
+              Height = 19
+              Alignment = taCenter
+              AutoSize = False
+              Caption = 'lbl4021'
+              Color = clSilver
+              Font.Charset = ANSI_CHARSET
+              Font.Color = clWindowText
+              Font.Height = -16
+              Font.Name = 'Arial'
+              Font.Style = [fsBold]
+              ParentColor = False
+              ParentFont = False
+              Transparent = False
+            end
+            object lbl4025: TLabel
+              Tag = 1
+              Left = 468
+              Top = 3
+              Width = 172
+              Height = 19
+              Alignment = taCenter
+              AutoSize = False
+              Caption = 'lbl4025'
+              Color = clSilver
+              Font.Charset = ANSI_CHARSET
+              Font.Color = clWindowText
+              Font.Height = -16
+              Font.Name = 'Arial'
+              Font.Style = [fsBold]
+              ParentColor = False
+              ParentFont = False
+              Transparent = False
+            end
+          end
+          object PanelBeltDenabled: TPanel
+            Left = 3
+            Top = 280
+            Width = 698
+            Height = 27
+            BevelOuter = bvNone
             TabOrder = 2
+            object lbl4018: TLabel
+              Tag = 1
+              Left = 194
+              Top = 3
+              Width = 65
+              Height = 19
+              Alignment = taCenter
+              AutoSize = False
+              Caption = 'lbl4018'
+              Color = clSilver
+              Font.Charset = ANSI_CHARSET
+              Font.Color = clWindowText
+              Font.Height = -16
+              Font.Name = 'Arial'
+              Font.Style = [fsBold]
+              ParentColor = False
+              ParentFont = False
+              Transparent = False
+            end
+            object lbl4022: TLabel
+              Tag = 1
+              Left = 271
+              Top = 3
+              Width = 172
+              Height = 19
+              Alignment = taCenter
+              AutoSize = False
+              Caption = 'lbl4022'
+              Color = clSilver
+              Font.Charset = ANSI_CHARSET
+              Font.Color = clWindowText
+              Font.Height = -16
+              Font.Name = 'Arial'
+              Font.Style = [fsBold]
+              ParentColor = False
+              ParentFont = False
+              Transparent = False
+            end
+            object lbl4026: TLabel
+              Tag = 1
+              Left = 468
+              Top = 3
+              Width = 172
+              Height = 19
+              Alignment = taCenter
+              AutoSize = False
+              Caption = 'lbl4026'
+              Color = clSilver
+              Font.Charset = ANSI_CHARSET
+              Font.Color = clWindowText
+              Font.Height = -16
+              Font.Name = 'Arial'
+              Font.Style = [fsBold]
+              ParentColor = False
+              ParentFont = False
+              Transparent = False
+            end
+            object LblBeltD: TLabel
+              Left = 21
+              Top = 4
+              Width = 11
+              Height = 18
+              Caption = 'D'
+              Color = 16574399
+              Font.Charset = ANSI_CHARSET
+              Font.Color = clWindowText
+              Font.Height = -15
+              Font.Name = 'Arial'
+              Font.Style = [fsBold]
+              ParentColor = False
+              ParentFont = False
+            end
+            object LblWeightD: TLabel
+              Tag = 2
+              Left = 61
+              Top = 3
+              Width = 112
+              Height = 19
+              Alignment = taCenter
+              AutoSize = False
+              Caption = 'LblWeightD'
+              Color = clSilver
+              Font.Charset = ANSI_CHARSET
+              Font.Color = clWindowText
+              Font.Height = -16
+              Font.Name = 'Arial'
+              Font.Style = [fsBold]
+              ParentColor = False
+              ParentFont = False
+              Transparent = False
+            end
           end
         end
       end
@@ -8917,11 +8924,12 @@ object FrameCp800: TFrameCp800
         Left = 1
         Top = 1
         Width = 730
-        Height = 482
+        Height = 422
         Caption = 'CardStorico'
         CardIndex = 2
         ParentColor = True
         TabOrder = 2
+        ExplicitHeight = 482
         object Panel5: TPanel
           Left = 0
           Top = 0
@@ -8987,19 +8995,20 @@ object FrameCp800: TFrameCp800
         end
         object DBNavigator2: TDBNavigator
           Left = 0
-          Top = 457
+          Top = 397
           Width = 730
           Height = 25
           DataSource = DsStorico
           VisibleButtons = [nbFirst, nbPrior, nbNext, nbLast, nbRefresh]
           Align = alBottom
           TabOrder = 1
+          ExplicitTop = 457
         end
         object DBGridStorico: TDBGrid
           Left = 0
           Top = 41
           Width = 730
-          Height = 416
+          Height = 356
           Align = alClient
           Color = 16574398
           DataSource = DsStorico
@@ -9091,7 +9100,7 @@ object FrameCp800: TFrameCp800
     Left = 0
     Top = 0
     Width = 100
-    Height = 510
+    Height = 450
     BevelKind = bkTile
     Color = 16574398
     CompactWidth = 0
@@ -9104,6 +9113,7 @@ object FrameCp800: TFrameCp800
     ParentFont = False
     Placement = svpLeft
     TabOrder = 1
+    ExplicitHeight = 510
     object BtnDati: TButton
       AlignWithMargins = True
       Left = 3
@@ -9197,8 +9207,8 @@ object FrameCp800: TFrameCp800
     ImageCollection = ImageCollection1
     Width = 32
     Height = 32
-    Left = 384
-    Top = 395
+    Left = 48
+    Top = 199
   end
   object ImageCollection1: TImageCollection
     Images = <
@@ -13063,13 +13073,13 @@ object FrameCp800: TFrameCp800
               355AAD93000059FD85C5AAC505D80000000049454E44AE426082}
           end>
       end>
-    Left = 36
-    Top = 195
+    Left = 40
+    Top = 159
   end
   object DsStorico: TDataSource
     DataSet = QStorico
-    Left = 560
-    Top = 379
+    Left = 36
+    Top = 331
   end
   object QStorico: TFDQuery
     Connection = DMIConsole.FDConnection
@@ -13115,7 +13125,7 @@ object FrameCp800: TFrameCp800
         'as WeightMin '
       '  from cp800Storico S'
       '  group by NumProgram')
-    Left = 500
-    Top = 376
+    Left = 40
+    Top = 268
   end
 end

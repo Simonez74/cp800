@@ -94,7 +94,7 @@ type
   TFrameCp800 = class(TFrame)
     ScrollBox1: TScrollBox;
     Memo1: TMemo;
-    Panel6: TPanel;
+    PanelMain: TPanel;
     LabelProgramNo: TLabel;
     Lbl1101: TLabel;
     LblDescProgram: TLabel;
@@ -130,29 +130,15 @@ type
     lbl1102: TSimonLabel;
     Splitter1: TSplitter;
     Splitter2: TSplitter;
-    BtnStop: TButton;
-    BtnStart: TButton;
     Lbl4015: TLabel;
-    lbl4016: TLabel;
-    lbl4017: TLabel;
-    lbl4018: TLabel;
     lbl4019: TLabel;
-    lbl4020: TLabel;
-    lbl4021: TLabel;
-    lbl4022: TLabel;
     lbl4023: TLabel;
-    lbl4024: TLabel;
-    lbl4025: TLabel;
-    lbl4026: TLabel;
     lbl4005: TLabel;
     lbl4006: TLabel;
     LabelTime: TLabel;
     lbl2008: TSimonLabel;
     LblBelt: TLabel;
     LblBeltA: TLabel;
-    LblBeltB: TLabel;
-    LblBeltC: TLabel;
-    LblBeltD: TLabel;
     LblSpeed: TLabel;
     LblTotalsKg: TLabel;
     LblTotalPacks: TLabel;
@@ -166,17 +152,31 @@ type
     LblDescProgram9: TLabel;
     LblTotals: TLabel;
     LblWeightA: TLabel;
-    LblWeightC: TLabel;
-    LblWeightD: TLabel;
-    LblWeightB: TLabel;
     lblTotSpeed: TLabel;
     Bevel1: TBevel;
     lbl5001: TSimonLabel;
-    lbl9001: TLabel;
     Bevel2: TBevel;
     Bevel3: TBevel;
     Bevel4: TBevel;
     PanelBeltBenabled: TPanel;
+    LblBeltB: TLabel;
+    LblWeightB: TLabel;
+    lbl4016: TLabel;
+    lbl4020: TLabel;
+    lbl4024: TLabel;
+    PanelBeltCenabled: TPanel;
+    LblBeltC: TLabel;
+    LblWeightC: TLabel;
+    lbl4017: TLabel;
+    lbl4021: TLabel;
+    lbl4025: TLabel;
+    PanelBeltDenabled: TPanel;
+    lbl4018: TLabel;
+    lbl4022: TLabel;
+    lbl4026: TLabel;
+    LblBeltD: TLabel;
+    LblWeightD: TLabel;
+    lbl9001: TLabel;
     procedure BtnDatiClick(Sender: TObject);
     procedure VirtualImage2Click(Sender: TObject);
     procedure lbl5001CaptionChange(Sender: TObject; const NewCaption: string);
@@ -185,8 +185,6 @@ type
     procedure lbl1102CaptionChange(Sender: TObject; const NewCaption: string);
     procedure DBGridStoricoDrawColumnCell(Sender: TObject; const Rect: TRect; DataCol: Integer; Column: TColumn;
       State: TGridDrawState);
-    procedure BtnStartClick(Sender: TObject);
-    procedure BtnStopClick(Sender: TObject);
   private
 
     //scarica un file FTP con coppie key=value e aggiorna le label sul frame
@@ -196,24 +194,17 @@ type
     // si avvia/ferma da solo in base a ProgramNumber / IsRunning / PackMode
     FMonitorWeight: TWeightFtpMonitor;
 
-
     FCodeMap: TDictionary<string,string>;
 //    FCodeMap: TList<string>;
-
 
     // Mappa dinamica: codice (es. "4001") ? riferimento alla TLabel corrispondente.
     // Viene costruita una volta in Configure scansionando i componenti del frame.
     FLabelMap: TDictionary<string, TLabel>;
 
-
     FIsRunning: Boolean;
     FIsShuttingDown: Boolean;
     FServerCfg : TServerConfig;
 
-//    FWeightPath : String;
-//    FIsRunningWeight: Boolean;
-
-    ///
     procedure MonitorParsed(Sender: TObject; APairs: TStringList);
     procedure MonitorLog(Sender: TObject; const Msg: string);
     procedure MonitorError(Sender: TObject; E: Exception);
@@ -229,8 +220,7 @@ type
 
     procedure FTPStatusHandler(const Status: string; AStatus: TIdStatus);
 
-    // Scansiona i componenti del frame e costruisce FLabelMap
-    procedure BuildLabelMap;
+
     // Estrae il codice numerico dal nome di una label (es. "lbl4001" ? "4001")
     function ExtractCodeFromName(const AName: string): string;
 
@@ -240,6 +230,9 @@ type
     procedure ElaboraStorico ;
     procedure AggiornaCondizioniLog;
     procedure InitWeightMonitor;
+
+
+    procedure VerificaLabelRicorsivo(AControl: TWinControl);
 
   public
     { Public declarations }
@@ -264,29 +257,19 @@ uses DMI_Console,  ConfigManager;
 constructor TFrameCp800.Create(AOwner: TComponent);
 begin
   inherited;
+  FLabelMap := TDictionary<string, TLabel>.Create;
+
+  FCodeMap := TDictionary<string, string>.Create;
+
   FMonitor := nil;
   FMonitorWeight := nil;
 
-  FCodeMap := nil;
+//  FCodeMap := nil;
   FIsRunning := False;
 end;
 
 destructor TFrameCp800.Destroy;
 begin
-(*
-12/02/206
-
-// Assicurati che tutto sia fermo
-  if not FIsShuttingDown then
-    Shutdown;
-
-  if assigned(FLabelMap) then
-    FreeAndNil(FLabelMap);
-
-  if Assigned(FCodeMap) then
-    FreeAndNil(FCodeMap);
-*)
-
  FIsShuttingDown := True;
 
   // DISCONNETTI eventi PRIMA
@@ -350,28 +333,62 @@ end;
 
 
 procedure TFrameCp800.Configure(Const AServerCfg : TServerConfig ; const BeltBenabled : boolean; const BeltCenabled : boolean; const BeltDEnabled : boolean );
-var
-  i :integer;
+//var
+//  i , j:integer;
+//  LPanel: TPanel;
 begin
   FServerCfg := AServerCfg;
 
   SplitView1.Opened := false;
 
-  // per tutti i tlabel metto caption = string.empty
-  for i := 0 to ComponentCount - 1 do
+{  // per tutti i tlabel metto caption = string.empty
+ for i := 0 to ComponentCount - 1 do // componentCount contiene tutti i componenti posseduti dal container (anche quelli non visivi)
+//  for i := 0 to PanelMain.ControlCount - 1 do // ControlCount contiene solo i controlli visivi effettivamente contenuti nel panel
   begin
 //   if ( Components[ i ] is TSimonLabel) AND ( Components[ i ].Tag > 0 ) then
 //     TSimonLabel(Components[ i ]).Caption := string.Empty;
     if ( Components[ i ] is TLabel ) AND ( Components[ i ].Tag > 0 ) then
       (Components[ i ] as TLabel ).Caption :=string.empty;
   end;
+ }
+  PanelBeltBenabled.Visible := BeltBenabled;
+  PanelBeltCenabled.Visible := BeltCenabled;
+  PanelBeltDenabled.Visible := BeltDenabled;
 
+  // azzera tdictionary
+  FCodeMap.Clear;
+  FLabelMap.Clear;
 
+  VerificaLabelRicorsivo(PanelMain);
 
+ {
+  for i := 0 to PanelMain.ControlCount - 1 do // ControlCount contiene solo i controlli visivi effettivamente contenuti nel panel
+  begin
 
+    if (( panelmain.Controls[i] is TLabel ) AND ( panelmain.Controls[i].Tag > 0 )) then
+//      (( panelmain.Controls[i] is TPanel ) AND ( panelmain.Controls[i].Visible )) then
+      (panelmain.Controls[i] as TLabel ).Caption :=string.empty;
+
+    // per i pannelli contenuto su PanelMain
+    if (panelmain.Controls[i]  is TPanel) then
+    begin
+      LPanel := TPanel(panelmain.Components[i]);
+      for j := 0 to LPanel.ControlCount - 1 do
+      begin
+        if (LPanel.Controls[j] is TLabel) and (TLabel(LPanel.Controls[j]).Tag > 0 ) then
+        begin
+          TLabel(LPanel.Controls[j]).Caption := string.Empty;
+        end;
+      end;
+
+    end;
+
+  end;
+
+   }
 
   // Costruisco la mappa codice ? label (va dopo il reset delle caption)
-  BuildLabelMap;
+ ////// BuildLabelMap;
 
   StatusBar.Panels.Items[0].Text:= Format('%s (%s:%d)',
      [ FServerCfg.Id,  FServerCfg.Host, FServerCfg.Port]);
@@ -448,8 +465,6 @@ begin
   FMonitor.Start;
 
   FIsRunning := True;
-  BtnStart.Enabled := False;
-  BtnStop.Enabled := True;
 
   AddLog(memo1, 'Monitor started');
 
@@ -485,55 +500,6 @@ begin
 
   AddLog(MemoProd, 'Weight Monitor initialised (waiting for program data...)');
 end;
-       {
-procedure TFrameCp800.Stop;
-begin
-  if not Assigned(FMonitor) then
-  begin
-    AddLog(memo1, 'Monitor not running');
-    Exit;
-  end;
-
-  try
-    // Disconnetto eventi PRIMA di fermare
-    FMonitor.OnParsed := nil;
-    FMonitor.OnLog := nil;
-    FMonitor.OnError := nil;
-    FMonitor.OnStatus := nil;
-
-    // fermo il thread
-    FMonitor.Stop;
-
-     // Aspetto completamento
-    if FMonitor.AttendoCompletamento(3000) then
-      AddLog(memo1, 'Monitor stopped cleanly')
-    else
-      AddLog(memo1, 'Monitor timeout - forcing cleanup');
-
-    // LIBERO L'OGGETTO
-    FreeAndNil(FMonitor);
-    AddLog(memo1, 'Monitor freed successfully');
-
-  except
-    // log opzionale
-     on E: Exception do
-     begin
-       AddLog(memo1,'Error stopping monitor: ' + E.Message);
-      // Libero anche in caso di errore
-      if Assigned(FMonitor) then
-        FreeAndNil(FMonitor);
-     end;
-  end;
-
-
-  FIsRunning := False;
-  // Aggiorna UI se i bottoni esistono ancora
-  if Assigned(BtnStart) then
-    BtnStart.Enabled := True;
-  if Assigned(BtnStop) then
-    BtnStop.Enabled := False;
-end;
-}
 
 procedure TFrameCp800.AggiornaCondizioniLog;
 begin
@@ -601,6 +567,8 @@ begin
         if Assigned(FMonitor) then
           FreeAndNil(FMonitor);
       except
+        on E: Exception do
+          AddLog(Memo1, 'Shutdown error: Freeandnil FMonitor ' + E.Message);
       end;
     end;
   end;
@@ -632,12 +600,62 @@ begin
         if Assigned(FMonitorWeight) then
           FreeAndNil(FMonitorWeight);
       except
+        on E: Exception do
+          AddLog(Memo1, 'Shutdown error: Freeandnil FMonitorWeight ' + E.Message);
       end;
     end;
 
   end;
   FIsRunning := False;
   FIsShuttingDown := False;
+end;
+
+procedure TFrameCp800.VerificaLabelRicorsivo(AControl: TWinControl);
+var
+  i: Integer;
+  lbl: TLabel;
+  code: string;
+begin
+  if not Assigned(FLabelMap) then
+    FLabelMap := TDictionary<string, TLabel>.Create;
+
+  if not Assigned(FCodeMap) then
+    FCodeMap := TDictionary<string, string>.Create;
+
+//  FCodeMap.Clear;
+
+//  FLabelMap.Clear;
+
+
+
+
+
+  // Ciclo su tutti i controlli del container corrente
+  for i := 0 to AControl.ControlCount - 1 do
+  begin
+    // Se trovo una TLabel con Tag > 0
+    if (AControl.Controls[i] is TLabel) then
+    begin
+      if TLabel(AControl.Controls[i]).Tag > 0 then
+      begin
+        TLabel(AControl.Controls[i]).caption := string.empty;
+        lbl := TLabel(AControl.Controls[i]);
+        code := ExtractCodeFromName( lbl.Name);
+
+        if (code <> '') and (not FLabelMap.ContainsKey(code)) then
+        begin
+          FLabelMap.AddOrSetValue(code, lbl);
+          FCodeMap.AddOrSetValue(code, code);
+        end;
+      end;
+    end
+    // Se trovo un TPanel (o altro TWinControl), chiamo ricorsivamente
+    else if (AControl.Controls[i] is TWinControl) then
+    begin
+      VerificaLabelRicorsivo(TWinControl(AControl.Controls[i]));
+    end;
+  end;
+
 end;
 
 procedure TFrameCp800.VirtualImage2Click(Sender: TObject);
@@ -668,61 +686,6 @@ begin
     DateTimeStoricoCloseUp(DateTimeStorico);
     CardPanel1.ActiveCard := CardStorico;
   end
-end;
-
-procedure TFrameCp800.BtnStartClick(Sender: TObject);
-begin
-  start;
-end;
-
-procedure TFrameCp800.BtnStopClick(Sender: TObject);
-begin
-  Shutdown;
-//  stop;
-end;
-
-
-// Scansiona tutti i componenti del frame.
-// Per ogni TLabel (inclusi i TSimonLabel che ereditano da TLabel) con Tag > 0:
-//   - estrae il codice dal nome (es. lbl4001 ? "4001")
-//   - se il codice è valido, lo inserisce in FLabelMap
-procedure TFrameCp800.BuildLabelMap;
-var
-  i: Integer;
-  comp: TComponent;
-  lbl: TLabel;
-  code: string;
-begin
-  if not Assigned(FLabelMap) then
-    FLabelMap := TDictionary<string, TLabel>.Create;
-
-  if not Assigned(FCodeMap) then
-    FCodeMap := TDictionary<string, string>.Create;
-
-  FCodeMap.Clear;
-
-  FLabelMap.Clear;
-
-  for i := 0 to ComponentCount - 1 do
-  begin
-    comp := Components[i];
-
-    // TSimonLabel è un discendente di TLabel, quindi "is TLabel" la cattura entrambe
-    if (comp is TLabel) and (comp.Tag > 0) then
-    begin
-      lbl := comp as TLabel;
-      code := ExtractCodeFromName(comp.Name);
-
-      if (code <> '') and (not FLabelMap.ContainsKey(code)) then
-      begin
-        FLabelMap.AddOrSetValue(code, lbl);
-        FCodeMap.AddOrSetValue(code, code);
-      end;
-    end;
-  end;
-
-  AddLog(Memo1, Format('LabelMap built: %d codici mappati', [FLabelMap.Count]));
-
 end;
 
 procedure TFrameCp800.FTPStatusHandler(const Status: string; AStatus: TIdStatus);

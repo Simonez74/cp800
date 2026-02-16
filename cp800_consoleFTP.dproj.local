@@ -121,28 +121,28 @@
     <Transaction>2026/02/06 10:09:32.000.133,V:\DelphiSorma\Common\Myfunc.Utils.pas=</Transaction>
     <Transaction>2026/02/11 15:33:26.000.142,=V:\DelphiSorma\Cp800\CP800-UDP-Console_FTP\FastMM4Messages.pas</Transaction>
     <Transaction>2026/02/11 15:33:26.000.115,=V:\DelphiSorma\Cp800\CP800-UDP-Console_FTP\FastMM4.pas</Transaction>
-    <Transaction>2026/02/12 17:13:59.690,=V:\DelphiSorma\Cp800\CP800-UDP-Console_FTP\Frame.Service.pas</Transaction>
+    <Transaction>2026/02/12 17:13:59.000.690,=V:\DelphiSorma\Cp800\CP800-UDP-Console_FTP\Frame.Service.pas</Transaction>
   </Transactions>
 	<ProjectSortOrder AutoSort="0" SortType="0">
     <File Path="V:\DelphiSorma"/>
     <File Path="..\..\Common"/>
     <File Path="..\..\Common\MyThreadLog.pas"/>
     <File Path="..\..\Common\funzioni.pas"/>
+    <File Path="ConfigManager.pas"/>
     <File Path="DMI_Console.pas"/>
     <File Path="DMI_Console.dfm"/>
-    <File Path="Forms.Main.pas"/>
-    <File Path="Forms.Main.dfm"/>
     <File Path="FrameMain.pas"/>
     <File Path="FrameMain.dfm"/>
     <File Path="Frame.Configuration.pas"/>
     <File Path="Frame.Configuration.dfm"/>
-    <File Path="ConfigManager.pas"/>
-    <File Path="UnitFtpMonitor.pas"/>
+    <File Path="Frame.Service.pas"/>
+    <File Path="Frame.Service.dfm"/>
+    <File Path="Forms.Main.pas"/>
+    <File Path="Forms.Main.dfm"/>
     <File Path="TypeUnit.pas"/>
+    <File Path="UnitFtpMonitor.pas"/>
     <File Path="UnitFtpMonitor.WeightData.pas"/>
     <File Path="FastMM4.pas"/>
     <File Path="FastMM4Messages.pas"/>
-    <File Path="Frame.Service.pas"/>
-    <File Path="Frame.Service.dfm"/>
   </ProjectSortOrder>
 </BorlandProject>

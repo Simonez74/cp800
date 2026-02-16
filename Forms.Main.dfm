@@ -63,11 +63,22 @@ object MainForm: TMainForm
         ImageIndex = 2
         OnClick = ToolButtonDeleteHistoricalClick
       end
-      object LabelDBStatus: TLabel
+      object ToolButton2: TToolButton
         Left = 86
         Top = 0
-        Width = 150
+        Width = 27
+        Caption = 'ToolButton2'
+        Enabled = False
+        ImageIndex = 3
+        Style = tbsSeparator
+      end
+      object LabelDBStatus: TLabel
+        AlignWithMargins = True
+        Left = 113
+        Top = 0
+        Width = 237
         Height = 25
+        Margins.Left = 20
         AutoSize = False
         Caption = 'Database: Non connesso'
         Font.Charset = DEFAULT_CHARSET

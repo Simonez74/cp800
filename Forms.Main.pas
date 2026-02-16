@@ -77,6 +77,7 @@ type
     MemoConnectionError: TMemo;
     ButtonRetryConnection: TButton;
     ToolButtonDeleteHistorical: TToolButton;
+    ToolButton2: TToolButton;
 
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);

@@ -216,7 +216,8 @@ begin
                 begin
                   var key := Trim(Copy(line, 1, p-1));
                   var val := Trim(Copy(line, p+1, MaxInt));
-                  if key <> '' then
+//                  if key <> '' then
+                  if (key <> '') and FOwner.FCodeMap.ContainsKey(key) then
                   begin
                //     if FOwner.FCodeMap.ContainsKey(key) then
                       pairs.Values[key] := val;
@@ -481,6 +482,7 @@ begin
       end);
 end;
 
+{
 procedure TFtpMonitor.DoQueueParsed(const APairs: TStringList);
 var
   FilteredPairs : TStringList ;
@@ -534,6 +536,54 @@ begin
 
   end;
 end;
+ }
+
+
+ procedure TFtpMonitor.DoQueueParsed(const APairs: TStringList);
+var
+  FilteredPairs : TStringList ;
+  i: Integer;
+  key, val: string;
+  localOnParsed: TParsedEvent;
+begin
+// ========================================
+  // SEZIONE PROTETTA: copia atomica e check
+  // ========================================
+  FLock.Enter;
+  try
+    // 1. Copia locale delle proprietà condivise
+    localOnParsed := FOnParsed;
+
+    // Creo una copia filtrata solo se c'è un handler
+    if Assigned(localOnParsed) and assigned(FCodeMap ) then
+    begin
+      FilteredPairs := TStringList.Create;
+//      FilteredPairs.NameValueSeparator := '=';
+      // Copio tutto il contenuto di APairs
+      FilteredPairs.Assign(APairs);
+    end
+    else
+      FilteredPairs := nil;
+  finally
+    FLock.Leave;
+  end;
+
+  if Assigned(FilteredPairs) then
+  begin
+    TThread.Synchronize(nil,
+      procedure
+      begin
+        try
+          localOnParsed(Self, FilteredPairs);
+        finally
+          FilteredPairs.Free;
+        end;
+      end) ;
+  end;
+end;
+
+
+
 
 procedure TFtpMonitor.OnFTPStatus(ASender: TObject; const AStatus: TIdStatus; const AStatusText: string);
 begin
