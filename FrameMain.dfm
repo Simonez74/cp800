@@ -18,7 +18,6 @@ object FrameCp800: TFrameCp800
     Color = 16574398
     ParentColor = False
     TabOrder = 0
-    ExplicitHeight = 510
     object PanelMenu: TPanel
       Left = 0
       Top = 0
@@ -53,7 +52,6 @@ object FrameCp800: TFrameCp800
       Color = 16574398
       ParentBackground = False
       TabOrder = 1
-      ExplicitHeight = 484
       object CardAltriDati: TCard
         Left = 1
         Top = 1
@@ -63,7 +61,6 @@ object FrameCp800: TFrameCp800
         CardIndex = 0
         ParentColor = True
         TabOrder = 0
-        ExplicitHeight = 482
         object Splitter1: TSplitter
           Left = 0
           Top = 229
@@ -105,7 +102,6 @@ object FrameCp800: TFrameCp800
           ReadOnly = True
           ScrollBars = ssVertical
           TabOrder = 1
-          ExplicitHeight = 247
         end
       end
       object CardDati: TCard
@@ -117,7 +113,6 @@ object FrameCp800: TFrameCp800
         CardIndex = 1
         ParentColor = True
         TabOrder = 1
-        ExplicitHeight = 482
         object StatusBar: TStatusBar
           Left = 0
           Top = 403
@@ -130,7 +125,6 @@ object FrameCp800: TFrameCp800
             item
               Width = 50
             end>
-          ExplicitTop = 463
         end
         object PanelMain: TPanel
           Left = 0
@@ -148,7 +142,6 @@ object FrameCp800: TFrameCp800
           ParentBackground = False
           ParentFont = False
           TabOrder = 1
-          ExplicitHeight = 463
           DesignSize = (
             730
             403)
@@ -8929,7 +8922,6 @@ object FrameCp800: TFrameCp800
         CardIndex = 2
         ParentColor = True
         TabOrder = 2
-        ExplicitHeight = 482
         object Panel5: TPanel
           Left = 0
           Top = 0
@@ -9113,7 +9105,6 @@ object FrameCp800: TFrameCp800
     ParentFont = False
     Placement = svpLeft
     TabOrder = 1
-    ExplicitHeight = 510
     object BtnDati: TButton
       AlignWithMargins = True
       Left = 3

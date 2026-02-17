@@ -402,24 +402,26 @@ begin
 
     while not QAppo.EOF do
     begin
-//      TabSheet := TMioTabSheet.Create(MainPageControl);
-      TabSheet := TTabSheet.Create(MainPageControl);
-      TabSheet.Caption := Qappo.FieldByName('cp800_Name').AsString;
-//      TabSheet.idCp800 := QAppo.FieldByName('cp800_id').asstring;
-      TabSheet.PageControl := MainPageControl;
-//      TabSheet.Color:= $00FCE7BE;
+      TabSheet := nil;
+      FFrame := nil;
 
-//      FFrame := TFrameCp800.Create(TabSheet,  QAppo.FieldByName('cp800_id').asstring);
-//      FFrame := TFrameCp800.Create( TabSheet );
-
-
-
-      FFrame := TFrameCp800.Create( nil );
-      FFrame.Align := alClient;
-      FFrame.Parent := TabSheet;
-      fframe.Name := Format('ServerFrame_%d', [FFrameList.Count + 1]);
-      //     FFrame.Cp800id :=  QAppo.FieldByName('cp800_id').asstring ;
       try
+  //      TabSheet := TMioTabSheet.Create(MainPageControl);
+        TabSheet := TTabSheet.Create(MainPageControl);
+        TabSheet.Caption := Qappo.FieldByName('cp800_Name').AsString;
+  //      TabSheet.idCp800 := QAppo.FieldByName('cp800_id').asstring;
+        TabSheet.PageControl := MainPageControl;
+  //      TabSheet.Color:= $00FCE7BE;
+
+  //      FFrame := TFrameCp800.Create(TabSheet,  QAppo.FieldByName('cp800_id').asstring);
+  //      FFrame := TFrameCp800.Create( TabSheet );
+
+        FFrame := TFrameCp800.Create( nil );
+        FFrame.Align := alClient;
+        FFrame.Parent := TabSheet;
+        fframe.Name := Format('ServerFrame_%d', [FFrameList.Count + 1]);
+      //     FFrame.Cp800id :=  QAppo.FieldByName('cp800_id').asstring ;
+
         IpForFile := QAppo.FieldByName('cp800_ip').asstring;
         while  Pos('.',IpForFile) > 0 do
           IpForFile := copy ( IpForFile, Pos('.',IpForFile) +1 , length(IpForFile ));
@@ -442,7 +444,10 @@ begin
         ServerCfg.Intervall := QAppo.FieldByName('FtpIdle').AsInteger;
         ServerCfg.PassiveMode := QAppo.FieldByName('FtpPassiveMode').AsBoolean;
 
-        Fframe.Configure( ServerCfg, FConfigManager.Config.BeltB,FConfigManager.Config.BeltC , FConfigManager.Config.BeltD );
+        Fframe.Configure( ServerCfg,
+                     FConfigManager.Config.BeltB,
+                     FConfigManager.Config.BeltC,
+                     FConfigManager.Config.BeltD );
 
         // ═══════════════════════════════════════════════════════════════════
         // AVVIA IL FRAME - tutto parte da qui!
@@ -463,8 +468,12 @@ begin
         begin
           LogToFile(Format('Errore configurazione frame CP800 %s: %s',
                           [QAppo.FieldByName('cp800_id').asstring, E.Message]));
-          // Il frame non viene aggiunto alla lista e verrà distrutto con TabSheet
-          FFrame.Free;
+          // Libero ENTRAMBI in caso di errore
+          if Assigned(FFrame) then
+            FFrame.Free;
+
+          if Assigned(TabSheet) then
+            TabSheet.Free;
         end;
       end;
 
@@ -477,6 +486,7 @@ begin
     if assigned(qappo) then
     begin
       qappo.close;
+
       qappo.free;
     end;
   end;

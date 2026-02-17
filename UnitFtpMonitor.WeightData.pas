@@ -125,19 +125,7 @@ end;
 
 destructor TWeightFtpMonitor.Destroy;
 begin
-  FUltimoIdProcessato := '';
-  FBaseOutputPath := '';
-
-
-  FStatoAttuale.DsProgram:= '';
-  FStatoAttuale.PackMode:= '';
-  FStatoAttuale.OutputFileName:= '';
-  FStatoAttuale.LastIDFile:= '';
-
-
-
-
-  // 1. Fermo e libero il timer
+// 1. Fermo e libero il timer
   if Assigned(FPeriodoAggiuntivoTimer) then
   begin
     FPeriodoAggiuntivoTimer.OnTimer := nil;
@@ -150,23 +138,34 @@ begin
 
   // 2. Salvo ultimo ID
   // salvo ultimo ID prima di distruggere
-  FStateLock.Enter;
-  try
-    if (FStatoAttuale.LastIDFile <> '') and (FUltimoIdProcessato <> '') then
-      SalvaUltimoIdProcessato(FStatoAttuale.LastIDFile);
-  finally
-    FStateLock.Leave;
+  if Assigned(FStateLock) then
+  begin
+    FStateLock.Enter;
+    try
+      if (FStatoAttuale.LastIDFile <> '') and (FUltimoIdProcessato <> '') then
+        SalvaUltimoIdProcessato(FStatoAttuale.LastIDFile);
+    finally
+      FStateLock.Leave;
+    end;
   end;
 
-  // 3. Libero FStateLock
+
+  // 3. ORA azzero (dopo aver salvato)
+  FUltimoIdProcessato := '';
+  FBaseOutputPath := '';
+
+
+  FStatoAttuale.DsProgram := string.empty;
+  FStatoAttuale.PackMode := string.empty;
+  FStatoAttuale.OutputFileName := string.empty;
+  FStatoAttuale.LastIDFile :=  string.empty;
+
+  // 4. Libero FStateLock
   if Assigned(FStateLock) then
     FreeAndNil(FStateLock);
 
 
-  FUltimoIdProcessato :='';
-  FBaseOutputPath:='';
-
-  // 4. Chiamo inherited (che libera FStopEvent e FLock della classe base)
+  // 5. Chiamo inherited (che libera FStopEvent e FLock della classe base)
   inherited;
 end;
 

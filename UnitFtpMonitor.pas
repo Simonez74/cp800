@@ -192,7 +192,7 @@ begin
           try
             ss.CopyFrom(ms, 0);
             txt := ss.DataString;
-             FOwner.DoQueueLog('Download file and converti to text');
+             FOwner.DoQueueLog('Download file and convert it to text');
           finally
             ss.Free;
           end;
@@ -216,8 +216,8 @@ begin
                 begin
                   var key := Trim(Copy(line, 1, p-1));
                   var val := Trim(Copy(line, p+1, MaxInt));
-//                  if key <> '' then
-                  if (key <> '') and FOwner.FCodeMap.ContainsKey(key) then
+                  if key <> '' then
+//                  if (key <> '') and FOwner.FCodeMap.ContainsKey(key) then
                   begin
                //     if FOwner.FCodeMap.ContainsKey(key) then
                       pairs.Values[key] := val;
@@ -294,33 +294,36 @@ end;
 
 destructor TFtpMonitor.Destroy;
 begin
-   FCodeMap := nil;
-//  FServerCfg.Inizializza;
-  FServerCfg.Host := '';
-  FServerCfg.Username := '';
-  FServerCfg.Password := '';
-  FServerCfg.RemotePath := '';
-  FServerCfg.FileName := '';
-  FServerCfg.FileNameProd := '';
-  FServerCfg.Id := '';
-  FServerCfg.NameMachine := '';
+  FCodeMap := nil;
 
-  Stop;
+  Stop; // mi assicuro che il thread sia fermo
 //  FreeAndNil(FLastValues);
+
+
+  // libero il thread se ancora assegnato dopo Stop
+  if Assigned(FThread) then
+  begin
+    FThread.Terminate;
+    FThread.WaitFor;  // Aspetta terminazione forzata
+    FreeAndNil(FThread);
+  end;
+
+
 
   if Assigned(FStopEvent) then
   begin
     FreeAndNil(FStopEvent);
-    DoQueueLog('FStopEvent freed'); // Debug
+//    DoQueueLog('FStopEvent freed'); // Debug
   end;
 
   if Assigned(FLock) then
   begin
     FreeAndNil(FLock);
-    DoQueueLog('FLock freed'); // Debug
+  //  DoQueueLog('FLock freed'); // Debug
   end;
 
 
+  FServerCfg.Inizializza;
 
 
 
@@ -542,8 +545,8 @@ end;
  procedure TFtpMonitor.DoQueueParsed(const APairs: TStringList);
 var
   FilteredPairs : TStringList ;
-  i: Integer;
-  key, val: string;
+//  i: Integer;
+//  key, val: string;
   localOnParsed: TParsedEvent;
 begin
 // ========================================

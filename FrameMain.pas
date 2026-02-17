@@ -197,10 +197,6 @@ type
     FCodeMap: TDictionary<string,string>;
 //    FCodeMap: TList<string>;
 
-    // Mappa dinamica: codice (es. "4001") ? riferimento alla TLabel corrispondente.
-    // Viene costruita una volta in Configure scansionando i componenti del frame.
-    FLabelMap: TDictionary<string, TLabel>;
-
     FIsRunning: Boolean;
     FIsShuttingDown: Boolean;
     FServerCfg : TServerConfig;
@@ -257,8 +253,6 @@ uses DMI_Console,  ConfigManager;
 constructor TFrameCp800.Create(AOwner: TComponent);
 begin
   inherited;
-  FLabelMap := TDictionary<string, TLabel>.Create;
-
   FCodeMap := TDictionary<string, string>.Create;
 
   FMonitor := nil;
@@ -315,12 +309,6 @@ begin
 
   // Dizionari
   try
-    if assigned(FLabelMap) then
-      FreeAndNil(FLabelMap);
-  except
-  end;
-
-  try
     if Assigned(FCodeMap) then
       FreeAndNil(FCodeMap);
   except
@@ -357,7 +345,6 @@ begin
 
   // azzera tdictionary
   FCodeMap.Clear;
-  FLabelMap.Clear;
 
   VerificaLabelRicorsivo(PanelMain);
 
@@ -424,7 +411,7 @@ begin
         begin
           try
             LogMsg := (Format('[%s] %s',
-              [FormatDateTime('hh:nn:ss', Now), Msg]));
+              [FormatDateTime('hh:nn:ss:zzz', Now), Msg]));
             AMemo.Lines.Add(LogMsg);
 
             // Auto-scroll all'ultima riga
@@ -433,7 +420,7 @@ begin
             if AMemo.Lines.Count > 1000 then
               AMemo.Lines.Delete(0);
            except
-            // Ignoro errori durante logging se il memo è in destroy
+            // Ignoro errori durante logging se il memo è in destroy               R
           end;
         end;
       end);
@@ -616,20 +603,10 @@ var
   lbl: TLabel;
   code: string;
 begin
-  if not Assigned(FLabelMap) then
-    FLabelMap := TDictionary<string, TLabel>.Create;
-
   if not Assigned(FCodeMap) then
     FCodeMap := TDictionary<string, string>.Create;
 
 //  FCodeMap.Clear;
-
-//  FLabelMap.Clear;
-
-
-
-
-
   // Ciclo su tutti i controlli del container corrente
   for i := 0 to AControl.ControlCount - 1 do
   begin
@@ -642,9 +619,9 @@ begin
         lbl := TLabel(AControl.Controls[i]);
         code := ExtractCodeFromName( lbl.Name);
 
-        if (code <> '') and (not FLabelMap.ContainsKey(code)) then
+//        if (code <> '') and (not FLabelMap.ContainsKey(code)) then
+        if (code <> '')  then
         begin
-          FLabelMap.AddOrSetValue(code, lbl);
           FCodeMap.AddOrSetValue(code, code);
         end;
       end;
@@ -690,14 +667,16 @@ end;
 
 procedure TFrameCp800.FTPStatusHandler(const Status: string; AStatus: TIdStatus);
 begin
-    {
-    TThread.Queue(nil, procedure
+  if FIsShuttingDown then
+    Exit;
+
+  TThread.Queue(nil,
+  procedure
   begin
-    Memo1.Lines.Add(Format('[Status] %s %s', [FormatDateTime('hh:mm:ss:zzz', now()), AStatusText]));
-    StatusBar.Panels.Items[1].Text:= Format('[Status] %s %s', [FormatDateTime('hh:mm:ss:zzz', now()), AStatusText]);;
-  end);}
-  Memo1.Lines.Add(Format('[Status] %s %s', [FormatDateTime('hh:mm:ss:zzz', now()), Status]));
-  StatusBar.Panels.Items[1].Text:= Format('[Status] %s %s', [FormatDateTime('hh:mm:ss:zzz', now()), Status]);;
+//    Memo1.Lines.Add(Format('%s [Status] %s', [FormatDateTime('hh:mm:ss:zzz', now()), Status]));
+    StatusBar.Panels.Items[1].Text:= Format('[Status] %s %s', [FormatDateTime('hh:mm:ss:zzz', now()), Status]);
+  end
+  );
 end;
 
 
@@ -914,141 +893,191 @@ end;
 
 procedure TFrameCp800.MonitorParsed(Sender: TObject; APairs: TStringList);
 var
-  key: string;
-  val: string;
+//  key: string;
+//  val: string;
 ////  lbl: TLabel;
-  totSpeed : integer;
-begin
 
+  LPairs : TStringlist;
+begin
   // APairs viene liberato automaticamente dal monitor dopo l'esecuzione di questo handler
 
-  // ========================================
-  // AGGIORNA LE LABEL CON I VALORI
-  // ========================================
-  val := APairs.Values['1101'];
-//  if (val <> '') and Assigned(FCodeMap) and FCodeMap.ContainsKey('1101') then
-  if (val <> '') then
-//    Lbl1101.Caption := Format('%s: %s (%s)', ['1101', val, FCodeMap['1101']])
-    Lbl1101.Caption := val
-  else
-    Lbl1101.Caption := string.Empty;
-//    Lbl1101.Caption := Format('%s: %s', ['1101', val]);
+  if FIsShuttingDown then
+    Exit;
 
-  val := APairs.Values['1102'];
-//  if (val <> '') and Assigned(FCodeMap) and FCodeMap.ContainsKey('1102') then
-  if (val <> '')  then
-//    Lbl1102.Caption := Format('%s: %s (%s)', ['1102', val, FCodeMap['1102']])
-    Lbl1102.Caption := val
-  else
-//    Lbl1102.Caption := Format('%s: %s', ['1102', val]);
-    Lbl1102.Caption := String.Empty;
+  // Copia snapshot nel thread del monitor — APairs è ancora valida qui
+  LPairs := TStringList.Create;
+  LPairs.Assign(APairs);  // copia completa: chiavi + valori
 
 
 
+  TThread.Queue(nil,
+  procedure
+  var
+   totSpeed : integer;
+  begin
+    try
+      if FIsShuttingDown then
+        Exit;
+
+      // ========================================
+      // AGGIORNA LE LABEL CON I VALORI
+      // ========================================
+
+      // Program Number
+      //  val := APairs.Values['1101'];
+      Lbl1101.Caption := LPairs.Values['1101'];
+
+      //  if (val <> '') and Assigned(FCodeMap) and FCodeMap.ContainsKey('1101') then
+      //  if (val <> '') then
+      //    Lbl1101.Caption := Format('%s: %s (%s)', ['1101', val, FCodeMap['1101']])
+      //    Lbl1101.Caption := val
+      //  else
+      //    Lbl1101.Caption := string.Empty;
+      //    Lbl1101.Caption := Format('%s: %s', ['1101', val]);
+
+        // Program Name
+      //  val := APairs.Values['1102'];
+      //  Lbl1102.Caption := val;
+          Lbl1102.Caption := LPairs.Values['1102'];
+
+      //  if (val <> '') and Assigned(FCodeMap) and FCodeMap.ContainsKey('1102') then
+      //  if (val <> '')  then
+      //    Lbl1102.Caption := Format('%s: %s (%s)', ['1102', val, FCodeMap['1102']])
+      //    Lbl1102.Caption := val
+      //  else
+      //    Lbl1102.Caption := Format('%s: %s', ['1102', val]);
+      //    Lbl1102.Caption := String.Empty;
 
 
-  val := APairs.Values['2001'];
-//  if (val <> '') and Assigned(FCodeMap) and FCodeMap.ContainsKey('2001') then
-  if (val <> '') then
-//    Lbl2001.Caption := Format('%s: %s (%s)', ['2001', val, FCodeMap['2001']])
-    Lbl2001.Caption := val
-  else
-//    Lbl2001.Caption := Format('%s: %s', ['2001', val]);
-    Lbl2001.Caption := String.Empty;
-
-  val := APairs.Values['2002'];
-//  if (val <> '') and Assigned(FCodeMap) and FCodeMap.ContainsKey('2002') then
-  if (val <> '')  then
-//    Lbl2002.Caption := Format('%s: %s (%s)', ['2002', val, FCodeMap['2002']])
-    Lbl2002.Caption := val
-  else
-//    Lbl2002.Caption := Format('%s: %s', ['2002', val]);
-    Lbl2002.Caption := string.Empty;
 
 
-//  Lbl2003.Caption := FCodeMap['2003'] + APairs.Values['2003'];
+        // set point A/B
+        Lbl2001.Caption := LPairs.Values['2001'];
 
-  Lbl2003.Caption := APairs.Values['2003'];
-//  Lbl2004.Caption := FCodeMap['2004'] + APairs.Values['2004'];
-  Lbl2004.Caption := APairs.Values['2004'];
-  Lbl2005.Caption := APairs.Values['2005'];
+      //  val := APairs.Values['2001'];
+      //  if (val <> '') and Assigned(FCodeMap) and FCodeMap.ContainsKey('2001') then
+      //  if (val <> '') then
+      //    Lbl2001.Caption := Format('%s: %s (%s)', ['2001', val, FCodeMap['2001']])
+      //    Lbl2001.Caption := val
+      //  else
+      //    Lbl2001.Caption := Format('%s: %s', ['2001', val]);
+      //    Lbl2001.Caption := String.Empty;
 
-  Lbl4005.Caption := APairs.Values['4005'];
-  Lbl4006.Caption := APairs.Values['4006'];
-
-  Lbl4015.Caption := APairs.Values['4015'];
-  Lbl4016.Caption := APairs.Values['4016'];
-  Lbl4017.Caption := APairs.Values['4017'];
-  Lbl4018.Caption := APairs.Values['4018'];
-  Lbl4019.Caption := APairs.Values['4019'];
-  Lbl4020.Caption := APairs.Values['4020'];
-  Lbl4021.Caption := APairs.Values['4021'];
-  Lbl4022.Caption := APairs.Values['4022'];
-  Lbl4023.Caption := APairs.Values['4023'];
-  Lbl4024.Caption := APairs.Values['4024'];
-  Lbl4025.Caption := APairs.Values['4025'];
-  Lbl4026.Caption := APairs.Values['4026'];
-
-  Lbl5001.Caption := APairs.Values['5001'];
-  Lbl9001.Caption := APairs.Values['9001'];
-
-  try
-    totSpeed := strtoint(APairs.Values['4015']) +
-                strtoint(APairs.Values['4016']) +
-                strtoint(APairs.Values['4017']) +
-                strtoint(APairs.Values['4018']) ;
-    lblTotSpeed.Caption := IntToStr(totSpeed);
-  except
-    lblTotSpeed.Caption := 'error';
-  end;
+      // set point C/D
+      Lbl2002.Caption := LPairs.Values['2002'];
+      //  val := APairs.Values['2002'];
+      //  if (val <> '') and Assigned(FCodeMap) and FCodeMap.ContainsKey('2002') then
+      //  if (val <> '')  then
+      //    Lbl2002.Caption := Format('%s: %s (%s)', ['2002', val, FCodeMap['2002']])
+      //    Lbl2002.Caption := val
+      //  else
+      //    Lbl2002.Caption := Format('%s: %s', ['2002', val]);
+      //    Lbl2002.Caption := string.Empty;
 
 
-  if uppercase(Lbl5001.Caption) = 'TRUE' then
-    Lbl9001.Color :=  $0039EA42
-  ELSE
-    Lbl9001.Color := clMedGray;
-  Application.ProcessMessages;
+      //  Lbl2003.Caption := FCodeMap['2003'] + APairs.Values['2003'];
+
+      // tollerance
+      Lbl2003.Caption := LPairs.Values['2003'];
+    //  Lbl2004.Caption := FCodeMap['2004'] + APairs.Values['2004'];
+      Lbl2004.Caption := LPairs.Values['2004'];
+
+      // pack mode
+      Lbl2005.Caption := LPairs.Values['2005'];
+
+      // total KG
+      Lbl4005.Caption := LPairs.Values['4005'];
+      // total packs
+      Lbl4006.Caption := LPairs.Values['4006'];
+
+      ///////////////////
+      // NASTRO A
+      // speed A
+      Lbl4015.Caption := LPairs.Values['4015'];
+      // totals KG A
+      Lbl4019.Caption := LPairs.Values['4019'];
+      // totals packs A
+      Lbl4023.Caption := LPairs.Values['4023'];
+      /////////////////////////////
+
+      // NASTRO B
+      if PanelBeltBenabled.Visible then
+      begin
+        // speed B
+        Lbl4016.Caption := LPairs.Values['4016'];
+        // totals KG B
+        Lbl4020.Caption := LPairs.Values['4020'];
+        // totals packs B
+        Lbl4024.Caption := LPairs.Values['4024'];
+      end;
+
+      // NASTRO C
+      if PanelBeltCenabled.Visible then
+      begin
+        // speed C
+        Lbl4017.Caption := LPairs.Values['4017'];
+        // totals KG C
+        Lbl4021.Caption := LPairs.Values['4021'];
+        // totals packs C
+        Lbl4025.Caption := LPairs.Values['4025'];
+      end;
+
+      // NASTRO D
+      if PanelBeltDenabled.Visible then
+      begin
+        // speed D
+        Lbl4018.Caption := LPairs.Values['4018'];
+        // totals KG D
+        Lbl4022.Caption := LPairs.Values['4022'];
+        // totals packs D
+        Lbl4026.Caption := LPairs.Values['4026'];
+      end;
+
+
+      // start/stop
+      Lbl5001.Caption := LPairs.Values['5001'];
+
+      // state
+      Lbl9001.Caption := LPairs.Values['9001'];
+
+      try
+        totSpeed := strtoint(LPairs.Values['4015']) +
+                    strtoint(LPairs.Values['4016']) +
+                    strtoint(LPairs.Values['4017']) +
+                    strtoint(LPairs.Values['4018']) ;
+        lblTotSpeed.Caption := IntToStr(totSpeed);
+      except
+        lblTotSpeed.Caption := 'error';
+      end;
+
+
+      if uppercase(Lbl5001.Caption) = 'TRUE' then
+        Lbl9001.Color :=  $0039EA42
+      ELSE
+        Lbl9001.Color := clMedGray;
+    //////////////////////  Application.ProcessMessages;
+
+      LabelTime.Caption := FormatDateTime('hh:mm:ss:zzz', now());
 
       (*
-  // ========================================
-  // AGGIORNA LE LABEL CON I VALORI (dinamico)
-  // ========================================
-  if Assigned(FLabelMap) then
-  begin
-    for key in FLabelMap.Keys do
-    begin
-      val := APairs.Values[key];
-      lbl := FLabelMap[key];
+      // ========================================
+      // LOG DEI VALORI PARSATI (opzionale, per debug)
+      // ========================================
+      if Memo1.Lines.Count > 1000 then
+        Memo1.Clear; // Previeni overflow del log
 
-      // Per 1101 e 1102 (e simili) se il valore è vuoto pulisco la label
-      if val <> '' then
-        lbl.Caption := val
-      else
-        lbl.Caption := string.Empty;
+
+      Memo1.Lines.Add('--- Parsed values ---');
+      for key in APairs do
+        Memo1.Lines.Add(Format('  %s = %s', [key, APairs.Values[key]]));
+
+      *)
+
+    finally
+      LPairs.Free;
     end;
-  end;
-     *)
 
-
-
-
-  LabelTime.Caption := FormatDateTime('hh:mm:ss:zzz', now());
-
-
-  // show parsed pairs for debug
-
-  // ========================================
-  // LOG DEI VALORI PARSATI (opzionale, per debug)
-  // ========================================
-
-  if Memo1.Lines.Count > 1000 then
-    Memo1.Clear; // Previeni overflow del log
-
-  Memo1.Lines.Add('--- Parsed values ---');
-  for key in APairs do
-    Memo1.Lines.Add(Format('  %s = %s', [key, APairs.Values[key]]));
-
-
+  end);
 
 end;
 
