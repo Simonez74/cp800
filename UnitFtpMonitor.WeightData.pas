@@ -90,22 +90,12 @@ end;
 
 { TWeightFtpMonitor }
 constructor TWeightFtpMonitor.Create(const AServerCfg : TServerConfig; const ACodeMap: TDictionary<string,string> );
-//var
-//  appPath, weightPath: string;
 begin
   inherited Create(AServerCfg, ACodeMap);
-
-//  appPath := ExtractFilePath(ParamStr(0));
-//  weightPath := TPath.Combine(appPath, 'Weight', AServerCfg.NameMachine);
-
-//  appPath := ExtractFilePath(ParamStr(0));
-//  weightPath := TPath.Combine(ExtractFilePath(ParamStr(0)), 'Weight', AServerCfg.NameMachine);
 
   FBaseOutputPath := TPath.Combine(ExtractFilePath(ParamStr(0)), 'Weight', AServerCfg.NameMachine);
 
   FStateLock := TCriticalSection.Create;
-
-
 
   // Inizializzo Periodo aggiuntivo  (default 1 secondo)
   FPeriodoAggiuntivoMs := 1000; // 1 secondo
@@ -126,7 +116,14 @@ end;
 
 destructor TWeightFtpMonitor.Destroy;
 begin
-// 1. Fermo e libero il timer
+  // 1. Disabilita eventi per evitare callback su oggetto in destroy
+  OnWeight := nil;
+
+
+  stop;
+
+
+  // 2. Fermo e libero il timer
   if Assigned(FPeriodoAggiuntivoTimer) then
   begin
     FPeriodoAggiuntivoTimer.OnTimer := nil;
@@ -134,10 +131,10 @@ begin
     FreeAndNil(FPeriodoAggiuntivoTimer);
   end;
 
-  OnWeight := nil;
 
 
-  // 2. Salvo ultimo ID
+
+  // 4. Salvo ultimo ID
   // salvo ultimo ID prima di distruggere
   if Assigned(FStateLock) then
   begin
@@ -151,7 +148,7 @@ begin
   end;
 
 
-  // 3. ORA azzero (dopo aver salvato)
+  // 5. ORA azzero (dopo aver salvato)
   FUltimoIdProcessato := '';
   FBaseOutputPath := '';
 
@@ -161,12 +158,12 @@ begin
   FStatoAttuale.OutputFileName := string.empty;
   FStatoAttuale.LastIDFile :=  string.empty;
 
-  // 4. Libero FStateLock
+  // 6. Libero FStateLock
   if Assigned(FStateLock) then
     FreeAndNil(FStateLock);
 
 
-  // 5. Chiamo inherited (che libera FStopEvent e FLock della classe base)
+  // 7. Chiamo inherited (che libera FStopEvent e FLock della classe base)
   inherited;
 end;
 
@@ -289,11 +286,15 @@ begin
 
 
   // Uso TTimer invece di Sleep - NON blocca la UI
+  //    Il thread FTP continua a girare per altri FPeriodoAggiuntivoMs millisecondi
   FPeriodoAggiuntivoTimer.Interval := FPeriodoAggiuntivoMs;
   FPeriodoAggiuntivoTimer.Enabled := True;
 
   // Il timer chiamerà OnPeriodoAggiuntivoTerminato dopo FPeriodoAggiuntivoMs millisecondi
-  // Nel frattempo, l'applicazione rimane responsive
+  // Nel frattempo:
+  // - UI rimane responsive
+  // - Thread FTP continua a scaricare dati
+
 end;
 
 procedure TWeightFtpMonitor.AggiornaCondizioni(const AProgram: string; AInstart: Boolean; const APackMode: string);
@@ -357,6 +358,8 @@ begin
 //    NewState.LastIDFile := '';
     NewState.OutputFileName := BuildOutputFileName('BlankProgramm');
     NewState.LastIDFile := ChangeFileExt(NewState.OutputFileName, '.lastid');;
+
+
   end;
 
   // Applico il cambio di stato IMMEDIATAMENTE

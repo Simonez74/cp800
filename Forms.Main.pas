@@ -939,7 +939,7 @@ end;
 procedure TMainForm.ApplicationEvents1Exception(Sender: TObject; E: Exception);
 var
   ErrorMsg: string;
-//  IsShutdownException: Boolean;
+  IsShutdownException: Boolean;
 //  IsCritical: Boolean;
 begin
   // ═══════════════════════════════════════════════════════════
@@ -953,11 +953,11 @@ begin
   end;
 
   // Durante shutdown: esco im maniera silenziosa
-{  IsShutdownException :=
+  IsShutdownException :=
     Application.Terminated or
     FIsClosing or
     (csDestroying in ComponentState);
- }
+
   if Application.Terminated or
     FIsClosing or
     (csDestroying in ComponentState) then

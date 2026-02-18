@@ -8994,7 +8994,6 @@ object FrameCp800: TFrameCp800
           VisibleButtons = [nbFirst, nbPrior, nbNext, nbLast, nbRefresh]
           Align = alBottom
           TabOrder = 1
-          ExplicitTop = 457
         end
         object DBGridStorico: TDBGrid
           Left = 0

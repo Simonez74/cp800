@@ -506,9 +506,15 @@ end;
 
 procedure TFrameCp800.Shutdown;
 begin
+  if FIsShuttingDown then
+    Exit;
+
   FIsShuttingDown := True;
+
   // PASSO 1: DISCONNETTO PRIMA GLI EVENT HANDLER
   // disconnetto gli handler per evitare che queued-procedure chiamino il frame già libero
+  //  Disconnetto eventi PRIMA per evitare callback su oggetti
+  // in fase di distruzione
   if Assigned(FMonitor) then
   begin
     FMonitor.OnParsed := nil;
@@ -526,72 +532,30 @@ begin
     FMonitorWeight.OnWeight := nil;
   end;
 
-  // PASSO 2: FERMO I THREAD
-  // fermo il monitor e libero l'istanza
+  // PASSO 2: FreeAndNil chiama il destructor che ora è bloccante.
+  //          Non torna finché il thread non è davvero terminato.
   if Assigned(FMonitor) then
   begin
     try
-      try
-        FMonitor.Stop;
-
-        // ASPETTO che il thread finisca DAVVERO
-        if FMonitor.AttendoCompletamento(3000) then
-          AddLog(Memo1, 'Monitor stopped cleanly')
-        else
-          // TIMEOUT: il thread non ha finito
-          AddLog(Memo1, 'Monitor timeout - will force cleanup');
-      except
-        on E: Exception do
-        begin
-          AddLog(Memo1, 'Shutdown error: ' + E.Message);
-          // Log su debugger se disponibile
-      //  OutputDebugString(PChar('Shutdown FMonitor error: ' + E.Message));
-        end;
-      end;
-    finally
-      try
-        // SEMPRE chiamare FreeAndNil - questo libera FStopEvent sul destroy
-        if Assigned(FMonitor) then
-          FreeAndNil(FMonitor);
-      except
-        on E: Exception do
-          AddLog(Memo1, 'Shutdown error: Freeandnil FMonitor ' + E.Message);
-      end;
+      // SEMPRE chiamare FreeAndNil - questo libera FStopEvent sul destroy
+      if Assigned(FMonitor) then
+        FreeAndNil(FMonitor);
+    except
+      on E: Exception do
+        LogToFile('Shutdown error: Freeandnil FMonitor ' + E.Message);
     end;
   end;
+
 
   if Assigned(FMonitorWeight) then
   begin
     try
-      try
-        FMonitorWeight.Stop;
-
-          // ASPETTO che il thread finisca DAVVERO
-        if FMonitorWeight.AttendoCompletamento(2000) then
-          AddLog(Memo1, ' Weight Monitor stopped cleanly')
-        else
-         // TIMEOUT: il thread non ha finito
-          AddLog(Memo1, 'Weight Monitor timeout - will force cleanup');
-        // SEMPRE chiamare FreeAndNil - questo libera FStopEvent sul destroy
-
-      // FreeAndNil(FMonitorWeight);
-      except
-        on E: Exception do
-        begin
-         AddLog(Memo1, 'Shutdown error: ' + E.Message);
-//        OutputDebugString(PChar('Shutdown FMonitorWeight error: ' + E.Message));
-        end;
-      end;
-    finally
-      try
-        if Assigned(FMonitorWeight) then
-          FreeAndNil(FMonitorWeight);
-      except
-        on E: Exception do
-          AddLog(Memo1, 'Shutdown error: Freeandnil FMonitorWeight ' + E.Message);
-      end;
+      if Assigned(FMonitorWeight) then
+        FreeAndNil(FMonitorWeight);
+    except
+      on E: Exception do
+        AddLog(Memo1, 'Shutdown error: Freeandnil FMonitorWeight ' + E.Message);
     end;
-
   end;
   FIsRunning := False;
   FIsShuttingDown := False;

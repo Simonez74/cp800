@@ -300,35 +300,14 @@ begin
   FCodeMap := nil;
 
   Stop; // mi assicuro che il thread sia fermo
-//  FreeAndNil(FLastValues);
-
-
-  // libero il thread se ancora assegnato dopo Stop
-  if Assigned(FThread) then
-  begin
-    FThread.Terminate;
-    FThread.WaitFor;  // Aspetta terminazione forzata
-    FreeAndNil(FThread);
-  end;
-
-
 
   if Assigned(FStopEvent) then
-  begin
     FreeAndNil(FStopEvent);
-//    DoQueueLog('FStopEvent freed'); // Debug
-  end;
 
   if Assigned(FLock) then
-  begin
     FreeAndNil(FLock);
-  //  DoQueueLog('FLock freed'); // Debug
-  end;
-
 
   FServerCfg.Inizializza;
-
-
 
   inherited;
 end;
@@ -374,14 +353,9 @@ begin
 end;
 
 procedure TFtpMonitor.Stop;
-var
-  waited: Integer;
-  MaxWaitMs: Integer;
 begin
   if not Assigned(FThread) then
     Exit;
-
-  MaxWaitMs := 2000;
 
   // Segnalo l'evento per svegliare immediatamente il thread se è in WaitFor
   // 1) Segnalo l'evento: se il thread è in WaitFor(IntervalMs) esce subito
@@ -390,52 +364,11 @@ begin
 
   // 2) Imposto Terminate per sicurezza (il thread controlla anche "Terminated" nel while)
   FThread.Terminate;
+  FThread.WaitFor; // bloccante
+  FreeAndNil(FThread);
 
-{  if Assigned(FThread) then
-  begin
-    FThread.Terminate;
-    FThread.WaitFor;
-    FreeAndNil(FThread);
-    DoQueueLog('Monitor stopped');
-  end;
-  }
-  // Imposto anche Terminate per sicurezza
-{  if Assigned(FThread) then
-  begin
-    FThread.Terminate;
-
-      FThread.WaitFor;
-    FreeAndNil(FThread);
-    DoQueueLog('Monitor stopped');
-
-  end;}
-
-  // 3) Polling con timeout: aspetto che il thread termini senza bloccare indefinitamente
-  // Aspetto per un breve tempo (il thread dovrebbe uscire velocemente grazie all'evento);
-  // non blocco indefinitamente l'UI: attendo fino a un timeout ragionevole
-  waited := 0;
-  while Assigned(FThread) and (not FThread.Finished) and (waited < MaxWaitMs) do
-   // and (waited < 2000) do
-  begin
-    Sleep(10);
-    Inc(waited, 10);
-    Application.ProcessMessages; // Permetto al thread di completare
-  end;
-
-  // 4) Libero solo se il thread è effettivamente finito
-  // Se il thread è terminato, lo libero
-  if Assigned(FThread) and FThread.Finished then
-  begin
-    FreeAndNil(FThread);
-    DoQueueLog('Monitor stopped');
-  end
-  else
-  begin
-    // Se non è ancora terminato dopo il timeout, lasco che venga liberato altrove.
-    DoQueueLog('Stop: thread did not finish within timeout; will be freed later');
-      // Il thread verrà comunque liberato dal destructor
-  end;
-
+  // Se non è ancora terminato dopo il timeout, lasco che venga liberato altrove.
+  DoQueueLog('FTPMonitor stopped');
 end;
 
 function TFtpMonitor.ThreadInEsecuzione: Boolean;
