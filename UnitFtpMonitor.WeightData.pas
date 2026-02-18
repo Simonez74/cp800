@@ -41,6 +41,7 @@ type
     procedure OnPeriodoAggiuntivoTerminato(Sender: TObject);
   protected
     procedure DoQueueParsed(const APairs: TStringList); override;
+    function VariabileDaLeggere(const AKey: string): Boolean; override;
   public
     constructor Create(Const AServerCfg :  TServerConfig; const ACodeMap: TDictionary<string,string>);
     destructor Destroy; override;
@@ -259,6 +260,14 @@ begin
   end;
 end;
 
+function TWeightFtpMonitor.VariabileDaLeggere(const AKey: string): Boolean;
+begin
+  // Accetto tutte le chiavi: il file pesi ha chiavi numeriche
+  // non presenti in FCodeMap
+  // non deve essere fatto alcun filtro
+  Result := True;
+end;
+
 procedure TWeightFtpMonitor.Stop;
 //  Override Stop con periodo aggiuntivo NON BLOCCANTE
 begin
@@ -344,8 +353,10 @@ begin
   end
   else
   begin
-    NewState.OutputFileName := '';
-    NewState.LastIDFile := '';
+//    NewState.OutputFileName := '';
+//    NewState.LastIDFile := '';
+    NewState.OutputFileName := BuildOutputFileName('BlankProgramm');
+    NewState.LastIDFile := ChangeFileExt(NewState.OutputFileName, '.lastid');;
   end;
 
   // Applico il cambio di stato IMMEDIATAMENTE

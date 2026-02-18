@@ -939,7 +939,7 @@ end;
 procedure TMainForm.ApplicationEvents1Exception(Sender: TObject; E: Exception);
 var
   ErrorMsg: string;
-  IsShutdownException: Boolean;
+//  IsShutdownException: Boolean;
 //  IsCritical: Boolean;
 begin
   // ═══════════════════════════════════════════════════════════
@@ -952,13 +952,22 @@ begin
     // Se anche il log fallisce, ignoro
   end;
 
-  // Durante la chiusura dell'app, evita popup/gestioni rumorose su eccezioni note.
-  IsShutdownException :=
+  // Durante shutdown: esco im maniera silenziosa
+{  IsShutdownException :=
     Application.Terminated or
     FIsClosing or
     (csDestroying in ComponentState);
+ }
+  if Application.Terminated or
+    FIsClosing or
+    (csDestroying in ComponentState) then
+      exit;
 
-  if IsShutdownException and
+
+
+
+
+{  if IsShutdownException and
      ((E is EAccessViolation) or
       (E is EInvalidPointer) or
       (E.Message.Contains('canvas')) or
@@ -971,120 +980,27 @@ begin
     end;
     Exit;
   end;
+}
 
-
-
+  // EAccessViolation / EOutOfMemory: stato potenzialmente corrotto
+  // meglio riavviare che continuare a rischio
+  if (E is EAccessViolation) or (E is EOutOfMemory) then
+  begin
+    LogToFile('CRITICAL - forcing application close' + e.Message);
     // Mostra un messaggio di errore all'utente
- { try
-    MessageBox(Application.Handle,
-               PChar('Si è verificato un errore critico nell''applicazione.' + sLineBreak +
-                     'L''applicazione verrà chiusa.' + sLineBreak + sLineBreak +
-                     'Dettagli: ' + E.Message),
-               'Errore Critico',
-               MB_OK or MB_ICONERROR);
-  except
-    // Ignora errori durante la visualizzazione del messaggio
-  end;
-  }
-  {
-  // Durante la chiusura, ignoro alcuni errori comuni
-  if Application.Terminated then
-  begin
-    // Ignoro errori di accesso a componenti durante shutdown
-    if (E is EAccessViolation) or
-       (E is EInvalidPointer) or
-       (E.Message.Contains('canvas')) or
-       (E.Message.Contains('destroyed')) then
-    begin
-      LogToFile('Eccezione ignorata durante chiusura applicazione');
-      Exit;
-    end;
+    MessageBox(Handle,
+                 PChar('Critical Error' + sLineBreak + ErrorMsg + sLineBreak +
+                       'The application will close' ),
+                 'Critical Error',
+                 MB_OK or MB_ICONERROR or MB_SYSTEMMODAL );
+
+    Application.Terminate;
+    exit;
   end;
 
-  }
-
-
-  try
-    ShowMessage('Errore: ' + E.Message + sLineBreak + sLineBreak +
-                'L''errore è stato registrato. L''applicazione continuerà.');
-  except
-  end;
-  // non chiudo mai applicazione ma loggo errore eventualemnte l'operatore può decidere se chiudere
-
-
-  (*
-  // ═══════════════════════════════════════════════════════════
-  // 2. DETERMINO SE L'ERRORE È CRITICO
-  // ═══════════════════════════════════════════════════════════
-  IsCritical := False;
-
-  // Errori critici che richiedono chiusura dell'applicazione
-  if (E is EOutOfMemory) or           // Memoria esaurita
-     (E is EStackOverflow) or         // Stack overflow
-     (E is EAccessViolation) or       // Access violation (puntatori invalidi)
-     (E is EInvalidPointer) or        // Puntatore invalido
-     (E is EExternalException) then   // Eccezione esterna (es. SO)
-  begin
-    IsCritical := True;
-    LogToFile('ERRORE CRITICO RILEVATO - Chiusura applicazione necessaria - ' + E.Message);
-  end;
-
- // ═══════════════════════════════════════════════════════════
-  // 3. GESTIONE IN BASE ALLA GRAVITÀ
-  // ═══════════════════════════════════════════════════════════
-  if IsCritical then
-  begin
-    // ───────────────────────────────────────────────────────
-    // ERRORE CRITICO - Chiudi l'applicazione
-    // ───────────────────────────────────────────────────────
-    try
-      // Mostra messaggio all'utente
-      MessageBox(
-        Application.Handle,
-        PChar('Si è verificato un errore critico.' + sLineBreak +
-              'L''applicazione verrà chiusa.' + sLineBreak + sLineBreak +
-              'Dettagli: ' + E.Message + sLineBreak + sLineBreak +
-              'Consultare il file di log per maggiori informazioni.'),
-        'Errore Critico',
-        MB_OK or MB_ICONERROR or MB_SYSTEMMODAL
-      );
-    except
-      // Ignora errori nel mostrare il messaggio
-    end;
-
-    // Esegui pulizia controllata
-    try
-      PerformEmergencyCleanup;
-    except
-      // Ignora errori durante la pulizia
-    end;
-
-    // Termina SUBITO l'applicazione
-    Halt(1);
-  end
-  else
-  begin
-    // ───────────────────────────────────────────────────────
-    // ERRORE NON CRITICO - Mostra messaggio e continua
-    // ───────────────────────────────────────────────────────
-    try
-      MessageBox(
-        Application.Handle,
-        PChar('Si è verificato un errore:' + sLineBreak + sLineBreak +
-              E.Message + sLineBreak + sLineBreak +
-              'L''errore è stato registrato nel log.' + sLineBreak +
-              'L''applicazione continuerà a funzionare.'),
-        'Errore',
-        MB_OK or MB_ICONWARNING
-      );
-    except
-      // Ignora errori nel mostrare il messaggio
-    end;
-
-    // L'applicazione CONTINUA a funzionare
-    // L'eccezione viene considerata "gestita"
-  end;
-  *)
+  // Per tutto il resto: loggo e notifico senza bloccare
+  UpdateConnectionStatus('ERRORE: ' + E.Message, clRed);
+  LogToFile('Non-critical exception handled, continuing.');
 end;
 
 

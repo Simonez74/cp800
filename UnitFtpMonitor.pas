@@ -53,6 +53,8 @@ type
     FThread: TMonitorThread;
     procedure DoQueueParsed(const APairs: TStringList); virtual;
     procedure DoQueueLog(const Msg: string); virtual;
+    function VariabileDaLeggere ( Const AKey : string):boolean; virtual;
+
   public
     constructor Create(const AServerCfg : TServerConfig; const ACodeMap: TDictionary<string,string>);
     destructor Destroy; override;
@@ -216,8 +218,9 @@ begin
                 begin
                   var key := Trim(Copy(line, 1, p-1));
                   var val := Trim(Copy(line, p+1, MaxInt));
-                  if key <> '' then
 //                  if (key <> '') and FOwner.FCodeMap.ContainsKey(key) then
+//                  if key <> '' then
+                  if (key <> '') and FOwner.VariabileDaLeggere(key) then
                   begin
                //     if FOwner.FCodeMap.ContainsKey(key) then
                       pairs.Values[key] := val;
@@ -438,6 +441,11 @@ end;
 function TFtpMonitor.ThreadInEsecuzione: Boolean;
 begin
   Result := Assigned(FThread) and not FThread.Finished;
+end;
+
+function TFtpMonitor.VariabileDaLeggere(const AKey: string): boolean;
+begin
+  Result := Assigned(FCodeMap) and FCodeMap.ContainsKey(AKey);
 end;
 
 procedure TFtpMonitor.DoQueueError(E: Exception);

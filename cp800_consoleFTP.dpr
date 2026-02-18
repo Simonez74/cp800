@@ -1,8 +1,10 @@
 program cp800_consoleFTP;
 
 uses
+  {$IFDEF DEBUG}
   FastMM4 in 'FastMM4.pas',
   FastMM4Messages in 'FastMM4Messages.pas',
+  {$ENDIF}
   Vcl.Forms,
   Forms.Main in 'Forms.Main.pas' {MainForm},
   DMI_Console in 'DMI_Console.pas' {DMIConsole: TDataModule},
@@ -19,7 +21,9 @@ uses
 {$R *.res}
 
 begin
+  {$IFDEF DEBUG}
   ReportMemoryLeaksOnShutdown := true;
+  {$ENDIF}
   Application.Initialize;
   Application.MainFormOnTaskbar := True;
   Application.CreateForm(TDMIConsole, DMIConsole);
