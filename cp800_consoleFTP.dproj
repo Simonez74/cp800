@@ -4,7 +4,7 @@
         <ProjectVersion>20.2</ProjectVersion>
         <FrameworkType>VCL</FrameworkType>
         <Base>True</Base>
-        <Config Condition="'$(Config)'==''">Debug</Config>
+        <Config Condition="'$(Config)'==''">Release</Config>
         <Platform Condition="'$(Platform)'==''">Win32</Platform>
         <ProjectName Condition="'$(ProjectName)'==''">cp800_consoleFTP</ProjectName>
         <TargetedPlatforms>3</TargetedPlatforms>
@@ -148,7 +148,6 @@
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
         <DCCReference Include="FastMM4.pas"/>
-        <DCCReference Include="FastMM4Messages.pas"/>
         <DCCReference Include="Forms.Main.pas">
             <Form>MainForm</Form>
         </DCCReference>

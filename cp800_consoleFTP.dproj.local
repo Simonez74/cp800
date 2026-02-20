@@ -143,6 +143,5 @@
     <File Path="UnitFtpMonitor.pas"/>
     <File Path="UnitFtpMonitor.WeightData.pas"/>
     <File Path="FastMM4.pas"/>
-    <File Path="FastMM4Messages.pas"/>
   </ProjectSortOrder>
 </BorlandProject>

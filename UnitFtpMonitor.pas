@@ -120,7 +120,7 @@ const
   RETRY_DELAY_MS = 1000;
 var
   ms: TMemoryStream;
-  ss: TStringStream;
+//  ss: TStringStream;
   txt: string;
   lines: TStringList;
   pairs: TStringList;
@@ -151,7 +151,8 @@ begin
 
   FIdFTP := TIdFTP.Create(nil);
   try
-    FIdFTP.TransferType := ftASCII;
+//    FIdFTP.TransferType := ftASCII;
+    FIdFTP.TransferType := ftBinary;
     FIdFTP.Passive := True;
     FIdFTP.Host := localHost;
     FIdFTP.Port := localPort;
@@ -184,11 +185,11 @@ begin
           end;
         end;
       end;
-
       ms := TMemoryStream.Create;
       try
         try
           FIdFTP.Get(FOwner.RemoteFileDownload, ms, False);
+       (*
           ms.Position := 0;
           ss := TStringStream.Create('', TEncoding.UTF8);
           try
@@ -198,6 +199,18 @@ begin
           finally
             ss.Free;
           end;
+          *)
+          // per problema di caratteri in russia
+          ms.Position := 0;
+//          var reader := TStreamReader.Create(ms, TEncoding.UTF8);
+          var reader := TStreamReader.Create(ms, TEncoding.ANSI);
+          try
+            txt := reader.ReadToEnd;
+            FOwner.DoQueueLog('Download file and convert it to text');
+          finally
+            reader.Free;
+          end;
+//          FOwner.DoQueueLog('ci arrivo ');
 
           pairs := TStringList.Create;
           try
@@ -246,7 +259,8 @@ begin
                 FIdFTP.Disconnect;
             except
             end;
-            FOwner.DoQueueError(E);
+            FOwner.DoQueueError( E);
+            FOwner.DoQueueLog('Error ftp get' + e.Message);
 //            Sleep(RETRY_DELAY_MS);
             // attendi con possibilità di sveglio immediato tramite evento Stop
             waitRes := FOwner.FStopEvent.WaitFor(RETRY_DELAY_MS);

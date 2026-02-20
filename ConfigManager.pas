@@ -1,4 +1,4 @@
-unit ConfigManager;
+﻿unit ConfigManager;
 
 interface
 // Classe dedicata per gestione configurazione
@@ -25,7 +25,7 @@ type
 //    property AutoConnect: Boolean read FAutoConnect write FAutoConnect;
 
     // Generale
-    property DeleteEventsOldsThan: integer read FDeleteEventsOldsThan write FDeleteEventsOldsThan; // elimina eventi registrati pi� vecchi dei giorni
+    property DeleteEventsOldsThan: integer read FDeleteEventsOldsThan write FDeleteEventsOldsThan; // elimina eventi registrati più vecchi dei giorni
 
     property BeltB : boolean read FBeltB write FBeltB;
     property BeltC : boolean read FBeltC write FBeltC;
@@ -67,12 +67,12 @@ end;
 
 procedure TConfigManager.LoadFromFile;
 var
-  IniFile: TIniFile;
+  IniFile: TMemIniFile;
 begin
   if not FileExists(FConfigFile) then
     exit;
 
-  IniFile := TIniFile.Create(FConfigFile);
+  IniFile := TMemIniFile.Create(FConfigFile, TEncoding.UTF8);
   try
     // Database
     FConfig.DBHost := IniFile.ReadString('Database', 'Host', 'localhost');
@@ -96,9 +96,9 @@ end;
 
 procedure TConfigManager.SaveToFile;
 var
-  IniFile: TIniFile;
+  IniFile: TMemIniFile;
 begin
- IniFile := TIniFile.Create(FConfigFile);
+ IniFile := TMemIniFile.Create(FConfigFile, TEncoding.UTF8);
   try
     // Database
     IniFile.WriteString('Database', 'Host', FConfig.DBHost);
@@ -114,6 +114,7 @@ begin
     IniFile.WriteBool('General','BeltC', FConfig.BeltC);
     IniFile.WriteBool('General','BeltD', FConfig.BeltD);
 
+    IniFile.UpdateFile;  // IMPORTANTE: TMemIniFile scrive su disco solo qui
   finally
     IniFile.Free;
   end;

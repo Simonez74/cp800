@@ -371,7 +371,7 @@ begin
 
       if QUpdate.Active then
         QUpdate.Close;
-      QUpdate.sql.Clear;
+(*      QUpdate.sql.Clear;
       QUpdate.SQL.Text:= 'INSERT INTO cp800Storico'
                       + ' ( `CP800_ID`,`DataTime`, `Session_ID`, `StartStop`, `NumProgram`, `DsProgram` '
                       + ' ,`TotalWeight`, `TotalPacks` ) '
@@ -384,6 +384,21 @@ begin
                              + CP800StoricoRecord.TotalWeight + ','
                              + CP800StoricoRecord.TotalPacks
                              + ')';
+      QUpdate.ExecSQL;
+      *)
+      QUpdate.SQL.Text := 'INSERT INTO cp800Storico'
+        + ' (CP800_ID, DataTime, Session_ID, StartStop, NumProgram, DsProgram, TotalWeight, TotalPacks)'
+        + ' VALUES (:id, :dt, :sess, :start, :numprg, :dsprg, :weight, :packs)';
+
+      QUpdate.ParamByName('id').AsString     := CP800StoricoRecord.Cp800_id;
+      QUpdate.ParamByName('dt').AsDateTime   := Now;
+      QUpdate.ParamByName('sess').AsInteger  := LSession;
+      QUpdate.ParamByName('start').AsInteger := lstart;
+      QUpdate.ParamByName('numprg').AsString := CP800StoricoRecord.NumPrg;
+      QUpdate.ParamByName('dsprg').AsString  := CP800StoricoRecord.DsPrg;
+      QUpdate.ParamByName('weight').AsString := CP800StoricoRecord.TotalWeight;
+      QUpdate.ParamByName('packs').AsString  := CP800StoricoRecord.TotalPacks;
+
       QUpdate.ExecSQL;
     except
        on e: Exception do

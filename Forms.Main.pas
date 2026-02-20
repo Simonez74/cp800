@@ -372,7 +372,7 @@ var
 begin
   if not FDatabaseConnected then
   begin
-    ShowMessage('Database non connesso. Impossibile caricare le macchine.');
+    ShowMessage('Database not connected. Unable to load machines.');
     Exit;
   end;
 
@@ -396,7 +396,7 @@ begin
 
     if not (LCountCp800 > 0)  then
     begin
-      ShowMessage('Attenzione! Non risulta attiva nessuna macchina');
+      ShowMessage('Attention. No machines are active.');
       exit;
     end;
 
@@ -606,8 +606,8 @@ begin
       on E: Exception do
       begin
         LogToFile('ERROR recreating frames: ' + E.Message);
-        ShowMessage('Errore nel ricreare le macchine: ' + E.Message + sLineBreak +
-                    'Verificare i log per dettagli.');
+        ShowMessage('Error recreating machines ' + E.Message + sLineBreak +
+                    'Check logs for details');
       end;
     end;
   end

@@ -257,10 +257,10 @@ begin
     try
       Screen.Cursor := crHourGlass;
       TestConn.Connected := True;
-      ShowMessage('Connection to database OK !');
+      ShowMessage('Connection to database OK');
     except
       on E: Exception do
-        ShowMessage('Error connection to database: ' + E.Message);
+        ShowMessage('Error connection to database ' + E.Message);
     end;
   finally
     Screen.Cursor := crDefault;
@@ -338,15 +338,15 @@ begin
   try
     DMIConsole.FDConnection.Connected := True;
     MemoDBInfo.Lines.Clear;
-    MemoDBInfo.Lines.Add('Connessione applicata con successo');
-    ShowMessage('Configurazione applicata con successo');
+    MemoDBInfo.Lines.Add('Connection applied successfully');
+    ShowMessage('Connection applied successfully');
     Modified := False;
   except
     on E: Exception do
     begin
       MemoDBInfo.Lines.Clear;
       MemoDBInfo.Lines.Add('Errore: ' + E.Message);
-      ShowMessage('Errore nell''applicare la configurazione: ' + E.Message);
+      ShowMessage('Error applying configuration ' + E.Message);
     end;
   end;
 end;

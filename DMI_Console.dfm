@@ -4,7 +4,6 @@ object DMIConsole: TDMIConsole
   Height = 237
   Width = 503
   object FDPhysMySQLDriverLink1: TFDPhysMySQLDriverLink
-    VendorHome = 'V:\DelphiSorma\Cp800\CP800-UDP-Console_FTP\Win32\Debug'
     VendorLib = 'libmysql.dll'
     Left = 260
     Top = 80
