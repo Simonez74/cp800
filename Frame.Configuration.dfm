@@ -9,7 +9,7 @@ object FrameConfiguration: TFrameConfiguration
     Top = 34
     Width = 692
     Height = 446
-    ActivePage = TsParametriDatabase
+    ActivePage = TsCp800_setup
     Align = alClient
     TabOrder = 0
     OnChange = PageControlChange
@@ -182,8 +182,6 @@ object FrameConfiguration: TFrameConfiguration
         Color = clWhite
         ParentBackground = False
         TabOrder = 11
-        ExplicitLeft = -3
-        ExplicitTop = 398
         object ButtonApply: TButton
           AlignWithMargins = True
           Left = 501
@@ -203,8 +201,6 @@ object FrameConfiguration: TFrameConfiguration
           ParentFont = False
           TabOrder = 0
           OnClick = ButtonApplyClick
-          ExplicitLeft = 437
-          ExplicitTop = 6
         end
         object ButtonSave: TButton
           AlignWithMargins = True
@@ -225,8 +221,6 @@ object FrameConfiguration: TFrameConfiguration
           ParentFont = False
           TabOrder = 1
           OnClick = ButtonSaveClick
-          ExplicitLeft = 519
-          ExplicitTop = -1
         end
         object ButtonCancel: TButton
           AlignWithMargins = True
@@ -247,8 +241,6 @@ object FrameConfiguration: TFrameConfiguration
           ParentFont = False
           TabOrder = 2
           OnClick = ButtonCancelClick
-          ExplicitLeft = 600
-          ExplicitTop = -1
         end
       end
     end
@@ -538,6 +530,36 @@ object FrameConfiguration: TFrameConfiguration
           DataField = 'cp800_name'
           DataSource = DsCp800_setup
           TabOrder = 1
+        end
+        object DBBeltB: TDBCheckBox
+          Left = 588
+          Top = 18
+          Width = 61
+          Height = 17
+          Caption = 'Belt B'
+          DataField = 'BeltB'
+          DataSource = DsCp800_setup
+          TabOrder = 7
+        end
+        object DBBeltC: TDBCheckBox
+          Left = 588
+          Top = 41
+          Width = 61
+          Height = 17
+          Caption = 'Belt C'
+          DataField = 'BeltC'
+          DataSource = DsCp800_setup
+          TabOrder = 8
+        end
+        object DBBeltD: TDBCheckBox
+          Left = 588
+          Top = 71
+          Width = 61
+          Height = 17
+          Caption = 'Belt D'
+          DataField = 'BeltD'
+          DataSource = DsCp800_setup
+          TabOrder = 9
         end
       end
     end

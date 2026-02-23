@@ -25,6 +25,7 @@ type
     FOwner: TFtpMonitor;
     FIdFTP: TIdFTP;
 
+    function ParseStreamToPairs(AStream: TStream   ): TStringList;
   protected
     procedure Execute; override;
   public
@@ -49,6 +50,9 @@ type
 
     procedure DoQueueError(E: Exception);
     procedure OnFTPStatus(ASender: TObject; const AStatus: TIdStatus; const AStatusText: string);
+
+
+
   protected
     FThread: TMonitorThread;
     procedure DoQueueParsed(const APairs: TStringList); virtual;
@@ -115,6 +119,7 @@ begin
   end;
 end;
 
+(*
 procedure TMonitorThread.Execute;
 const
   RETRY_DELAY_MS = 1000;
@@ -189,7 +194,7 @@ begin
       try
         try
           FIdFTP.Get(FOwner.RemoteFileDownload, ms, False);
-       (*
+       {
           ms.Position := 0;
           ss := TStringStream.Create('', TEncoding.UTF8);
           try
@@ -199,9 +204,11 @@ begin
           finally
             ss.Free;
           end;
-          *)
+          }
           // per problema di caratteri in russia
           ms.Position := 0;
+
+////////          TEncoding.GetEncoding(28595)
 //          var reader := TStreamReader.Create(ms, TEncoding.UTF8);
           var reader := TStreamReader.Create(ms, TEncoding.ANSI);
           try
@@ -287,6 +294,130 @@ begin
     FreeAndNil(FIdFTP);
   end;
 end;
+*)
+
+procedure TMonitorThread.Execute;
+const
+  RETRY_DELAY_MS = 1000;
+var
+  ms: TMemoryStream;
+//  ss: TStringStream;
+  txt: string;
+  lines: TStringList;
+  pairs: TStringList;
+  i: Integer;
+  line: string;
+  attemptConnect: Boolean;
+  waitRes: TWaitResult;
+  localHost: string;
+  localPort: Integer;
+  localUser: string;
+  localPass: string;
+  localRemoteFile: string;
+begin
+
+  // Copia thread-safe dei parametri di configurazione
+  FOwner.FLock.Enter;
+  try
+    localHost := FOwner.FServerCfg.Host;
+    localPort := FOwner.FServerCfg.Port;
+    localUser := FOwner.FServerCfg.Username;
+    localPass := FOwner.FServerCfg.Password;
+    localRemoteFile := FOwner.RemoteFileDownload ;
+  finally
+    FOwner.FLock.Leave;
+  end;
+
+
+
+  FIdFTP := TIdFTP.Create(nil);
+  try
+//    FIdFTP.TransferType := ftASCII;
+    FIdFTP.TransferType := ftBinary;
+    FIdFTP.Passive := True;
+    FIdFTP.Host := localHost;
+    FIdFTP.Port := localPort;
+    FIdFTP.Username := localUser;
+    FIdFTP.Password := localPass;
+    FIdFTP.ConnectTimeout := 5000;
+    FIdFTP.ReadTimeout := 5000;
+    FIdFTP.OnStatus := FOwner.OnFTPStatus;
+
+    attemptConnect := True;
+    while not Terminated do
+    begin
+      if attemptConnect then
+      begin
+        try
+          if not FIdFTP.Connected then
+            FIdFTP.Connect;
+          attemptConnect := False;
+          FOwner.DoQueueLog('FTP connected successfully');
+        except
+          on E: Exception do
+          begin
+            attemptConnect := True;
+            FOwner.DoQueueLog('FTP connect failed, retrying...');
+//          Sleep(RETRY_DELAY_MS);
+            waitRes := FOwner.FStopEvent.WaitFor(RETRY_DELAY_MS);
+            if waitRes <> wrTimeout then
+             break;    //evento di stop
+            Continue;
+          end;
+        end;
+      end;
+      ms := TMemoryStream.Create;
+      try
+        try
+          FIdFTP.Get(FOwner.RemoteFileDownload, ms, False);
+          pairs := ParseStreamToPairs(ms);
+          try
+            // consegno i pairs al proprietario (quest'ultimo farà Queue e libererà la copia)
+            FOwner.DoQueueParsed(pairs);
+          finally
+            pairs.Free;
+          end;
+
+        except
+          on E: Exception do
+          begin
+            attemptConnect := True;
+            try
+              if FIdFTP.Connected then
+                FIdFTP.Disconnect;
+            except
+            end;
+            FOwner.DoQueueError( E);
+            FOwner.DoQueueLog('Error ftp get' + e.Message);
+//            Sleep(RETRY_DELAY_MS);
+            // attendi con possibilità di sveglio immediato tramite evento Stop
+            waitRes := FOwner.FStopEvent.WaitFor(RETRY_DELAY_MS);
+            if waitRes <> wrTimeout then
+              Break;
+          end;
+        end;
+      finally
+        ms.Free;
+      end;
+
+//      Sleep(FOwner.FIntervalMs);
+       // Invece di Sleep: aspetto l'evento con timeout (così Stop sveglia subito il thread)
+      waitRes := FOwner.FStopEvent.WaitFor(FOwner.FIntervalMs);
+      if waitRes <> wrTimeout then
+        Break; // evento segnalato => uscire
+    end;
+  finally
+    try
+      if Assigned(FIdFTP) and FIdFTP.Connected then
+        FIdFTP.Disconnect;
+    except
+    end;
+    FreeAndNil(FIdFTP);
+  end;
+end;
+
+
+
 
 { TFtpMonitor }
 
@@ -551,6 +682,49 @@ begin
     begin
        FStatusEvent(AStatusText, AStatus )
     end);
+end;
+
+function TMonitorThread.ParseStreamToPairs(AStream: TStream): TStringList;
+var
+  Owned: Boolean;
+  Reader: TStreamReader;
+  Line, Key, Val: string;
+  P: Integer;
+  Encoding28595: TEncoding; // encoding per cirillico e ansi
+begin
+  Result := TStringList.Create;
+  Result.NameValueSeparator := '=';
+
+  AStream.Position := 0;
+
+  Encoding28595 := TEncoding.GetEncoding(28595);
+//  Reader := TStreamReader.Create(AStream,  TEncoding.GetEncoding(28595));
+  Reader := TStreamReader.Create(AStream,  Encoding28595);
+  try
+    while not Reader.EndOfStream do
+    begin
+      Line := Trim(Reader.ReadLine);
+
+      if (Line = '') or
+         ((Length(Line) >= 2) and (Line[1] = '/') and (Line[2] = '/')) then
+        Continue;
+
+      Line := StringReplace(Line, #9, ' ', [rfReplaceAll]);
+
+      P := Pos('=', Line);
+      if P > 0 then
+      begin
+        Key := Trim(Copy(Line, 1, P - 1));
+        Val := Trim(Copy(Line, P + 1, MaxInt));
+
+        if (Key <> '') and FOwner.VariabileDaLeggere(Key) then
+          Result.Values[Key] := Val;
+      end;
+    end;
+  finally
+    Reader.Free;
+    Encoding28595.Free;
+  end;
 end;
 
 end.

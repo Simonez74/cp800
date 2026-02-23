@@ -71,6 +71,9 @@ type
     ButtonSave: TButton;
     ButtonCancel: TButton;
     ImageList1: TImageList;
+    DBBeltB: TDBCheckBox;
+    DBBeltC: TDBCheckBox;
+    DBBeltD: TDBCheckBox;
     procedure ButtonTestDBClick(Sender: TObject);
     procedure ButtonApplyClick(Sender: TObject);
     procedure ButtonSaveClick(Sender: TObject);

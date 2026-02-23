@@ -506,6 +506,9 @@ var
   i: Integer;
   Frame: TFrameCp800;
 begin
+
+/////////////////  StopAllMonitors
+
   LogToFile('═══ Entering Configuration Mode ═══');
 
   // Salvo lo stato: i frame erano attivi?
