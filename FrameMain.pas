@@ -235,7 +235,7 @@ type
 //    constructor Create(AOwner: TComponent; const FCp800Id: string); reintroduce;
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
-    procedure Configure(Const AServerCfg : TServerConfig; const BeltBenabled : boolean; const BeltCenabled : boolean; const BeltDEnabled : boolean );
+    procedure Configure(Const AServerCfg : TServerConfig );
     procedure Start;
 //    procedure Stop;
     procedure Shutdown;
@@ -314,16 +314,11 @@ begin
   except
   end;
 
-
-
   inherited;
 end;
 
 
-procedure TFrameCp800.Configure(Const AServerCfg : TServerConfig ; const BeltBenabled : boolean; const BeltCenabled : boolean; const BeltDEnabled : boolean );
-//var
-//  i , j:integer;
-//  LPanel: TPanel;
+procedure TFrameCp800.Configure(Const AServerCfg : TServerConfig  );
 begin
   FServerCfg := AServerCfg;
 
@@ -339,9 +334,9 @@ begin
       (Components[ i ] as TLabel ).Caption :=string.empty;
   end;
  }
-  PanelBeltBenabled.Visible := BeltBenabled;
-  PanelBeltCenabled.Visible := BeltCenabled;
-  PanelBeltDenabled.Visible := BeltDenabled;
+  PanelBeltBenabled.Visible := FServerCfg.ManagementBeltB;
+  PanelBeltCenabled.Visible := FServerCfg.ManagementBeltC;
+  PanelBeltDenabled.Visible := FServerCfg.ManagementBeltD;
 
   // azzera tdictionary
   FCodeMap.Clear;

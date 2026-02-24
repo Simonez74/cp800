@@ -98,9 +98,6 @@ type
     FDatabaseConnected: Boolean;
     FIsClosing: Boolean;
 
-    // flag per sapere se c'erano frame attivi prima della config
-    FFramesWereActive: Boolean;
-
     procedure ShowConnectionPanel(const AMessage: string; AShowRetry: Boolean = False);
     procedure HideConnectionPanel;
     procedure UpdateConnectionStatus(const AStatus: string; AColor: TColor);
@@ -108,23 +105,14 @@ type
     procedure ConnectToDatabase;
     procedure CreatePanels;
 
-    procedure EnterConfigurationMode;    // Ferma e libera tutto
-    procedure ExitConfigurationMode;     // Ricrea tutto
-
     procedure ToggleConfigPanel;
     procedure UpdateStatusBar;
-    procedure ApplyConfigurationToApp;
-
-
     procedure StopAllMonitors;
 
     // callback per liberare FramService
     procedure FrameServiceClose(Sender : TObject);
-
-
   public
     { Public declarations }
-
   end;
 
 var
@@ -443,11 +431,11 @@ begin
         ServerCfg.NameMachine :=QAppo.FieldByName('cp800_name').asstring;
         ServerCfg.Intervall := QAppo.FieldByName('FtpIdle').AsInteger;
         ServerCfg.PassiveMode := QAppo.FieldByName('FtpPassiveMode').AsBoolean;
+        ServerCfg.ManagementBeltB := QAppo.FieldByName('BeltB').AsBoolean;
+        ServerCfg.ManagementBeltC := QAppo.FieldByName('BeltC').AsBoolean;
+        ServerCfg.ManagementBeltD := QAppo.FieldByName('BeltD').AsBoolean;
 
-        Fframe.Configure( ServerCfg,
-                     FConfigManager.Config.BeltB,
-                     FConfigManager.Config.BeltC,
-                     FConfigManager.Config.BeltD );
+        Fframe.Configure( ServerCfg);
 
         // ═══════════════════════════════════════════════════════════════════
         // AVVIA IL FRAME - tutto parte da qui!
@@ -499,129 +487,6 @@ begin
 end;
 
 
-
-procedure TMainForm.EnterConfigurationMode;
-// Ferma e libera TUTTO quando entro in config
-var
-  i: Integer;
-  Frame: TFrameCp800;
-begin
-
-/////////////////  StopAllMonitors
-
-  LogToFile('═══ Entering Configuration Mode ═══');
-
-  // Salvo lo stato: i frame erano attivi?
-  FFramesWereActive := Assigned(FFrameList) and (FFrameList.Count > 0);
-
-  if not FFramesWereActive then
-  begin
-    LogToFile('No active frames to stop');
-    Exit;
-  end;
-
-  Screen.Cursor := crHourGlass;
-  try
-    // ────────────────────────────────────────────────────────────
-    // PASSO 1: FERMO TUTTI I MONITOR (chiamando Shutdown su ogni frame)
-    // ────────────────────────────────────────────────────────────
-    LogToFile(Format('Stopping %d frames...', [FFrameList.Count]));
-
-    for i := FFrameList.Count - 1 downto 0 do
-    begin
-      Frame := FFrameList[i];
-      if Assigned(Frame) then
-      begin
-        try
-          Frame.Shutdown;  // Ferma FMonitor e FMonitorWeight, libera tutto
-          LogToFile(Format('  Frame %d shutdown completed', [i]));
-        except
-          on E: Exception do
-            LogToFile(Format('  ERROR stopping frame %d: %s', [i, E.Message]));
-        end;
-      end;
-    end;
-
-    // Pausa per assicurarsi che i thread siano terminati
-    Sleep(200);
-    Application.ProcessMessages;
-
-    // ────────────────────────────────────────────────────────────
-    // PASSO 2: LIBERO TUTTI I FRAME
-    // ────────────────────────────────────────────────────────────
-    LogToFile('Destroying all frames...');
-
-    try
-      FFrameList.Clear;  // Libero tutti i frame (OwnsObjects=True)
-      LogToFile('  Frame list cleared');
-    except
-      on E: Exception do
-      begin
-        LogToFile('  ERROR clearing frame list: ' + E.Message);
-        // Forzo svuotamento
-        try
-          while FFrameList.Count > 0 do
-            FFrameList.Delete(0);
-        except
-        end;
-      end;
-    end;
-
-    // ────────────────────────────────────────────────────────────
-    // PASSO 3: LIBERO TUTTE LE TAB
-    // ────────────────────────────────────────────────────────────
-    LogToFile('Destroying all tabs...');
-
-    try
-      while MainPageControl.PageCount > 0 do
-      begin
-        MainPageControl.Pages[0].Free;
-      end;
-      LogToFile('  All tabs destroyed');
-    except
-      on E: Exception do
-        LogToFile('  ERROR destroying tabs: ' + E.Message);
-    end;
-
-    LogToFile('═══ Configuration Mode Active - All frames stopped ═══');
-    UpdateStatusBar;
-
-  finally
-    Screen.Cursor := crDefault;
-  end;
-
-end;
-
-procedure TMainForm.ExitConfigurationMode;
-// Ricrea tutto quando esco dalla config
-begin
-  LogToFile('═══ Exiting Configuration Mode ═══');
-
-  // Ricrea i frame solo se erano attivi prima
-  if FFramesWereActive then
-  begin
-    LogToFile('Recreating frames...');
-
-    try
-      CreatePanels;  // Ricrea tutto come in FormShow
-      LogToFile('═══ Frames recreated successfully ═══');
-    except
-      on E: Exception do
-      begin
-        LogToFile('ERROR recreating frames: ' + E.Message);
-        ShowMessage('Error recreating machines ' + E.Message + sLineBreak +
-                    'Check logs for details');
-      end;
-    end;
-  end
-  else
-  begin
-    LogToFile('No frames to recreate (were not active)');
-  end;
-
-  UpdateStatusBar;
-end;
-
 procedure TMainForm.UpdateStatusBar;
 begin
   if not Assigned(StatusBar1) then
@@ -646,25 +511,6 @@ begin
   StatusBar1.Panels[3].Text := '';
 end;
 
-procedure TMainForm.ApplyConfigurationToApp;
-begin
-  // Chiudi connessione esistente
-  if DMIConsole.FDConnection.Connected then
-  begin
-    try
-      DMIConsole.FDConnection.Connected := False;
-      FDatabaseConnected := False;
-    except
-      on E: Exception do
-        LogToFile('Errore chiusura connessione: ' + E.Message);
-    end;
-  end;
-
-  // Mostra pannello (gira nel thread principale)
-  ShowConnectionPanel('Connessione al database in corso...', False);
-  // Tenta nuova connessione con i parametri aggiornati
-  ConnectToDatabase ;
-end;
 
 procedure TMainForm.ConnectToDatabase ;
 begin
@@ -809,37 +655,46 @@ begin
         FConfigVisible := False;
         Exit;
       end;
-      {
-      if MessageDlg(
-        Format('There are %d monitor active FTP.' + sLineBreak +
-               'To access the configuration they will be stopped.' + sLineBreak + sLineBreak +
-               'when exiting the configuration they will be automatically recreated.' + sLineBreak + sLineBreak +
-               'Continue?', [FFrameList.Count]),
-        mtConfirmation,
-        [mbYes, mbNo],
-        0
-      ) <> mrYes then
-      begin
-        // Annulla
-        FConfigVisible := False;
-        Exit;
-      end;
-      }
     end;
+    try
+      StopAllMonitors;
+      if Assigned(FFrameList) then
+      begin
+        try
+          FFrameList.Clear;
+        except
+          on E: Exception do
+          begin
+            LogToFile('FormClose - Error during FormClose: ' + E.Message);
+            // Forzo svuotamento
+            try
+              while FFrameList.Count > 0 do
+              begin
+                FFrameList.Delete(0);
+                LogToFile('FormClose - Error during FormClose forced emptying: ' + E.Message);
+              end;
+            except
+            end;
+          end;
+        end;
+      end;
+      while MainPageControl.PageCount > 0 do
+        MainPageControl.Pages[0].Free;
 
-    // FERMO E LIBERA TUTTO
-    EnterConfigurationMode;
+      // Mostro pannello configurazione
+      PanelConfig.Visible := True;
+      PanelConfig.Align := alClient;
+      PanelConfig.BringToFront;
+      PanelMain.Visible := False;
 
-    // Mostro pannello configurazione
-    PanelConfig.Visible := True;
-    PanelConfig.Align := alClient;
-    PanelConfig.BringToFront;
-    PanelMain.Visible := False;
+      FFrameConfig.LoadConfiguration;
+      ToolButtonConfig.Down := True;
 
-    FFrameConfig.LoadConfiguration;
-    ToolButtonConfig.Down := True;
-
-    LogToFile('Configuration panel opened');
+      LogToFile('Configuration panel opened');
+    except
+      on E: Exception do
+      LogToFile('FormClose - Error during StopAllMonitors: ' + E.Message);
+    end;
   end
   else
   begin
@@ -856,21 +711,11 @@ begin
         [ tcbYes, tcbNo, tcbCancel ],
                    5000)
       of
-{      case MessageDlg(
-        'There are unsaved changes. What do you want to do??' + sLineBreak + sLineBreak +
-        'Yes = Save and apply' + sLineBreak +
-        'No = Discard changes' + sLineBreak +
-        'Cancel = Go back to setup',
-        mtConfirmation,
-        [mbYes, mbNo, mbCancel],
-        0
-      ) of
-      }
         mrYes:
         begin
           // Salvo configurazione
           FFrameConfig.SaveConfiguration;
-          ApplyConfigurationToApp;
+/////////          ApplyConfigurationToApp;
 
           // Riconnetto al database se necessario
           if not FDatabaseConnected then
@@ -879,9 +724,9 @@ begin
             // Mostra pannello (gira nel thread principale)
             ShowConnectionPanel('Connessione al database in corso...', False);
             ConnectToDatabase;
+            Exit; // CreatePanels verrà chiamato dentro ConnectToDatabase → Synchronize
           end;
         end;
-
         mrNo:
         begin
           // Ricarico configurazione originale (scarto modifiche)
@@ -905,8 +750,10 @@ begin
     PanelMain.BringToFront;
     ToolButtonConfig.Down := False;
 
+    // ← UNICA CHIAMATA: stesso codice di FormShow → ConnectToDatabase
+    CreatePanels;
     // RICREO TUTTO
-    ExitConfigurationMode;
+//    ExitConfigurationMode;
 
     LogToFile('Configuration panel closed');
   end;

@@ -2,18 +2,19 @@ object FrameConfiguration: TFrameConfiguration
   Left = 0
   Top = 0
   Width = 692
-  Height = 480
+  Height = 504
   TabOrder = 0
   object PageControl: TPageControl
     Left = 0
     Top = 34
     Width = 692
-    Height = 446
+    Height = 470
     ActivePage = TsCp800_setup
     Align = alClient
     TabOrder = 0
     OnChange = PageControlChange
     OnChanging = PageControlChanging
+    ExplicitHeight = 446
     object TsParametriDatabase: TTabSheet
       Caption = 'Params database'
       object lbl1: TLabel
@@ -73,13 +74,6 @@ object FrameConfiguration: TFrameConfiguration
         ParentFont = False
         Layout = tlCenter
         WordWrap = True
-      end
-      object Label1: TLabel
-        Left = 87
-        Top = 212
-        Width = 163
-        Height = 15
-        Caption = 'Unloading belts configurations'
       end
       object EdMySqlIP: TEdit
         Left = 267
@@ -142,46 +136,24 @@ object FrameConfiguration: TFrameConfiguration
       end
       object MemoDBInfo: TMemo
         Left = 0
-        Top = 281
+        Top = 305
         Width = 684
         Height = 101
         Align = alBottom
         TabOrder = 7
-      end
-      object CbBeltB: TCheckBox
-        Left = 266
-        Top = 212
-        Width = 97
-        Height = 17
-        Caption = 'Belt B enabled'
-        TabOrder = 8
-      end
-      object CbBeltC: TCheckBox
-        Left = 267
-        Top = 235
-        Width = 97
-        Height = 17
-        Caption = 'Belt C enabled '
-        TabOrder = 9
-      end
-      object CbBeltD: TCheckBox
-        Left = 267
-        Top = 258
-        Width = 97
-        Height = 17
-        Caption = 'Belt D enabled '
-        TabOrder = 10
+        ExplicitTop = 281
       end
       object Panel1: TPanel
         Left = 0
-        Top = 382
+        Top = 406
         Width = 684
         Height = 34
         Align = alBottom
         BevelOuter = bvNone
         Color = clWhite
         ParentBackground = False
-        TabOrder = 11
+        TabOrder = 8
+        ExplicitTop = 382
         object ButtonApply: TButton
           AlignWithMargins = True
           Left = 501
@@ -251,7 +223,7 @@ object FrameConfiguration: TFrameConfiguration
         Left = 0
         Top = 0
         Width = 684
-        Height = 199
+        Height = 187
         Align = alClient
         DataSource = DsCp800_setup
         Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
@@ -320,37 +292,39 @@ object FrameConfiguration: TFrameConfiguration
       end
       object DBNavigator1: TDBNavigator
         Left = 0
-        Top = 199
+        Top = 187
         Width = 684
         Height = 25
         DataSource = DsCp800_setup
         Align = alBottom
         TabOrder = 1
+        ExplicitLeft = -20
+        ExplicitTop = 203
       end
       object PanelDatiDatabase: TPanel
         Left = 0
-        Top = 224
+        Top = 212
         Width = 684
-        Height = 192
+        Height = 228
         Align = alBottom
         BevelOuter = bvNone
         TabOrder = 2
         object Label39: TLabel
-          Left = 12
+          Left = 10
           Top = 0
           Width = 13
           Height = 15
           Caption = 'Id:'
         end
         object Label40: TLabel
-          Left = 92
+          Left = 90
           Top = 0
           Width = 35
           Height = 15
           Caption = 'Name:'
         end
         object Label41: TLabel
-          Left = 15
+          Left = 10
           Top = 42
           Width = 13
           Height = 15
@@ -358,21 +332,21 @@ object FrameConfiguration: TFrameConfiguration
           FocusControl = DbEd_cp800_IP
         end
         object Label4: TLabel
-          Left = 186
+          Left = 184
           Top = 42
           Width = 25
           Height = 15
           Caption = 'Port:'
         end
         object Label5: TLabel
-          Left = 320
+          Left = 318
           Top = 42
           Width = 74
           Height = 15
           Caption = 'Read timeout:'
         end
         object DbEd_cp800_IP: TDBEdit
-          Left = 12
+          Left = 10
           Top = 57
           Width = 160
           Height = 23
@@ -381,7 +355,7 @@ object FrameConfiguration: TFrameConfiguration
           TabOrder = 2
         end
         object EDcp800SDO_Active: TDBCheckBox
-          Left = 484
+          Left = 482
           Top = 19
           Width = 84
           Height = 17
@@ -393,7 +367,7 @@ object FrameConfiguration: TFrameConfiguration
           ValueUnchecked = '0'
         end
         object DBcp800_Port: TDBEdit
-          Left = 186
+          Left = 184
           Top = 57
           Width = 121
           Height = 23
@@ -402,7 +376,7 @@ object FrameConfiguration: TFrameConfiguration
           TabOrder = 3
         end
         object DBcp800_timeoutread: TDBEdit
-          Left = 320
+          Left = 318
           Top = 57
           Width = 95
           Height = 23
@@ -412,12 +386,13 @@ object FrameConfiguration: TFrameConfiguration
         end
         object GbParametriFTP: TGroupBox
           Left = 0
-          Top = 89
+          Top = 83
           Width = 684
           Height = 103
           Align = alBottom
           Caption = 'Settings Ftp'
           TabOrder = 6
+          ExplicitTop = 89
           object Label45: TLabel
             Left = 9
             Top = 15
@@ -514,7 +489,7 @@ object FrameConfiguration: TFrameConfiguration
           end
         end
         object DBEdit1: TDBEdit
-          Left = 12
+          Left = 10
           Top = 16
           Width = 61
           Height = 23
@@ -523,7 +498,7 @@ object FrameConfiguration: TFrameConfiguration
           TabOrder = 0
         end
         object DBEdit2: TDBEdit
-          Left = 92
+          Left = 90
           Top = 16
           Width = 373
           Height = 23
@@ -531,35 +506,45 @@ object FrameConfiguration: TFrameConfiguration
           DataSource = DsCp800_setup
           TabOrder = 1
         end
-        object DBBeltB: TDBCheckBox
-          Left = 588
-          Top = 18
-          Width = 61
-          Height = 17
-          Caption = 'Belt B'
-          DataField = 'BeltB'
-          DataSource = DsCp800_setup
+        object GroupBox1: TGroupBox
+          Left = 0
+          Top = 186
+          Width = 684
+          Height = 42
+          Align = alBottom
+          Caption = 'Management'
           TabOrder = 7
-        end
-        object DBBeltC: TDBCheckBox
-          Left = 588
-          Top = 41
-          Width = 61
-          Height = 17
-          Caption = 'Belt C'
-          DataField = 'BeltC'
-          DataSource = DsCp800_setup
-          TabOrder = 8
-        end
-        object DBBeltD: TDBCheckBox
-          Left = 588
-          Top = 71
-          Width = 61
-          Height = 17
-          Caption = 'Belt D'
-          DataField = 'BeltD'
-          DataSource = DsCp800_setup
-          TabOrder = 9
+          ExplicitTop = 221
+          object DBBeltB: TDBCheckBox
+            Left = 12
+            Top = 20
+            Width = 61
+            Height = 17
+            Caption = 'Belt B'
+            DataField = 'BeltB'
+            DataSource = DsCp800_setup
+            TabOrder = 0
+          end
+          object DBBeltC: TDBCheckBox
+            Left = 94
+            Top = 20
+            Width = 61
+            Height = 17
+            Caption = 'Belt C'
+            DataField = 'BeltC'
+            DataSource = DsCp800_setup
+            TabOrder = 1
+          end
+          object DBBeltD: TDBCheckBox
+            Left = 168
+            Top = 20
+            Width = 61
+            Height = 17
+            Caption = 'Belt D'
+            DataField = 'BeltD'
+            DataSource = DsCp800_setup
+            TabOrder = 2
+          end
         end
       end
     end

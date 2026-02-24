@@ -11,9 +11,6 @@ type
     FDBUser: string;
     FDBPassword: string;
     FDeleteEventsOldsThan: integer;
-    FBeltD: boolean;
-    FBeltB: boolean;
-    FBeltC: boolean;
   public
     constructor Create;
     // Database
@@ -23,14 +20,8 @@ type
     property DBUser: string read FDBUser write FDBUser;
     property DBPassword: string read FDBPassword write FDBPassword;
 //    property AutoConnect: Boolean read FAutoConnect write FAutoConnect;
-
     // Generale
     property DeleteEventsOldsThan: integer read FDeleteEventsOldsThan write FDeleteEventsOldsThan; // elimina eventi registrati più vecchi dei giorni
-
-    property BeltB : boolean read FBeltB write FBeltB;
-    property BeltC : boolean read FBeltC write FBeltC;
-    property BeltD : boolean read FBeltD write FBeltD;
-
   end;
 
   TConfigManager = class
@@ -84,11 +75,6 @@ begin
 
  // Generale
     FConfig.DeleteEventsOldsThan := IniFile.ReadInteger('General', 'DeleteEventsOldsThan', 0);
-
-    FConfig.BeltB := IniFile.ReadBool('General','BeltB', false);
-    FConfig.BeltC := IniFile.ReadBool('General','BeltC', false);
-    FConfig.BeltD := IniFile.ReadBool('General','BeltD', false);
-
   finally
     IniFile.Free;
   end;
@@ -110,9 +96,6 @@ begin
 
     // Generale
     IniFile.WriteInteger('General', 'DeleteEventsOldsThan', FConfig.DeleteEventsOldsThan);
-    IniFile.WriteBool('General','BeltB', FConfig.BeltB);
-    IniFile.WriteBool('General','BeltC', FConfig.BeltC);
-    IniFile.WriteBool('General','BeltD', FConfig.BeltD);
 
     IniFile.UpdateFile;  // IMPORTANTE: TMemIniFile scrive su disco solo qui
   finally
@@ -135,9 +118,6 @@ begin
   FDBPassword := '';
   // FAutoConnect := True;
   FDeleteEventsOldsThan := 0;
-  FBeltB := false;
-  FBeltC := false;
-  FBeltD := false;
 end;
 
 

@@ -28,6 +28,9 @@ type
     NameMachine : String;
     Intervall : integer;
     PassiveMode : boolean;
+    ManagementBeltB : boolean;
+    ManagementBeltC : boolean;
+    ManagementBeltD : boolean;
 
     procedure Inizializza;
   end;
@@ -159,6 +162,9 @@ begin
   NameMachine := String.Empty;
   Intervall := 0;
   PassiveMode := true;
+  ManagementBeltB := false;
+  ManagementBeltC := false;
+  ManagementBeltD := false;
 
 end;
 

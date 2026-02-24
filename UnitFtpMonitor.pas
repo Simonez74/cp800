@@ -26,6 +26,7 @@ type
     FIdFTP: TIdFTP;
 
     function ParseStreamToPairs(AStream: TStream   ): TStringList;
+    function ParseStreamFastToPairs(AStream: TStream   ): TStringList;
   protected
     procedure Execute; override;
   public
@@ -302,11 +303,11 @@ const
 var
   ms: TMemoryStream;
 //  ss: TStringStream;
-  txt: string;
-  lines: TStringList;
+//  txt: string;
+//  lines: TStringList;
   pairs: TStringList;
-  i: Integer;
-  line: string;
+//  i: Integer;
+//  line: string;
   attemptConnect: Boolean;
   waitRes: TWaitResult;
   localHost: string;
@@ -370,7 +371,8 @@ begin
       try
         try
           FIdFTP.Get(FOwner.RemoteFileDownload, ms, False);
-          pairs := ParseStreamToPairs(ms);
+//          pairs := ParseStreamToPairs(ms);
+          pairs := ParseStreamFastToPairs(ms);
           try
             // consegno i pairs al proprietario (quest'ultimo farà Queue e libererà la copia)
             FOwner.DoQueueParsed(pairs);
@@ -684,9 +686,95 @@ begin
     end);
 end;
 
+function TMonitorThread.ParseStreamFastToPairs(AStream: TStream): TStringList;
+var
+//  Owned: Boolean;
+  Key, Val: string;
+
+  Buffer: TBytes;
+  Text: string;
+  Encoding28595: TEncoding; // encoding per cirillico e ansi
+  P, LineStart, EqPos: PChar;
+
+  function TrimRange(StartP, EndP: PChar): string;
+  begin
+    while (StartP <= EndP) and (StartP^ <= ' ') do Inc(StartP);
+    while (EndP >= StartP) and (EndP^ <= ' ') do Dec(EndP);
+
+    if EndP >= StartP then
+      SetString(Result, StartP, EndP - StartP + 1)
+    else
+      Result := '';
+  end;
+
+
+begin
+  Result := TStringList.Create;
+  Result.NameValueSeparator := '=';
+
+  AStream.Position := 0;
+  SetLength(Buffer, AStream.Size);
+  if Length(Buffer) > 0 then
+    AStream.ReadBuffer(Buffer[0], Length(Buffer));
+
+  Encoding28595 := TEncoding.GetEncoding(28595);
+  try
+    Text := Encoding28595.GetString(Buffer);
+  finally
+    Encoding28595.Free;
+  end;
+
+  P := PChar(Text);
+  LineStart := P;
+
+  while P^ <> #0 do
+  begin
+    if (P^ = #13) or (P^ = #10) then
+    begin
+      EqPos := LineStart;
+      while (EqPos < P) and (EqPos^ <> '=') do Inc(EqPos);
+
+      if EqPos < P then
+      begin
+        Key := TrimRange(LineStart, EqPos - 1);
+        Val := TrimRange(EqPos + 1, P - 1);
+
+        if (Key <> '') and fOwner.VariabileDaLeggere(Key) then
+          Result.Values[Key] := Val;
+      end;
+
+      Inc(P);
+      if (P^ = #10) and ((P - 1)^ = #13) then Inc(P);
+
+      LineStart := P;
+      Continue;
+    end;
+
+    Inc(P);
+  end;
+
+  {
+  // ultima riga (se non termina con CR/LF)
+  if LineStart < P then
+  begin
+    EqPos := LineStart;
+    while (EqPos < P) and (EqPos^ <> '=') do Inc(EqPos);
+
+    if EqPos < P then
+    begin
+      Key := TrimRange(LineStart, EqPos - 1);
+      Val := TrimRange(EqPos + 1, P - 1);
+
+      if (Key <> '') and AOwner.VariabileDaLeggere(Key) then
+        Result.Values[Key] := Val;
+    end;
+  end;
+  }
+end;
+
 function TMonitorThread.ParseStreamToPairs(AStream: TStream): TStringList;
 var
-  Owned: Boolean;
+//  Owned: Boolean;
   Reader: TStreamReader;
   Line, Key, Val: string;
   P: Integer;

@@ -62,15 +62,12 @@ type
     LabelConfigTitle: TLabel;
     DBEdit1: TDBEdit;
     DBEdit2: TDBEdit;
-    Label1: TLabel;
-    CbBeltB: TCheckBox;
-    CbBeltC: TCheckBox;
-    CbBeltD: TCheckBox;
     Panel1: TPanel;
     ButtonApply: TButton;
     ButtonSave: TButton;
     ButtonCancel: TButton;
     ImageList1: TImageList;
+    GroupBox1: TGroupBox;
     DBBeltB: TDBCheckBox;
     DBBeltC: TDBCheckBox;
     DBBeltD: TDBCheckBox;
@@ -121,13 +118,6 @@ begin
   EdMySqlPsw.OnChange := MarkAsModified;
 
   SpinEditDelEventsOlderThan.OnChange := MarkAsModified;
-
-
-
-  CbBeltB.OnClick := MarkAsModified;
-  CbBeltC.OnClick := MarkAsModified;
-  CbBeltD.OnClick := MarkAsModified;
-
 end;
 
 procedure TFrameConfiguration.SetConfigManager(AConfigManager: TConfigManager);
@@ -192,10 +182,6 @@ begin
   // Generale
   SpinEditDelEventsOlderThan.Value := FConfigManager.Config.DeleteEventsOldsThan;
 
-  CbBeltB.Checked := FConfigManager.Config.BeltB;
-  CbBeltC.Checked := FConfigManager.Config.BeltC;
-  CbBeltD.Checked := FConfigManager.Config.BeltD;
-
   Modified := False;
 end;
 
@@ -215,9 +201,6 @@ if not Assigned(FConfigManager) then
   // Generale
   FConfigManager.Config.DeleteEventsOldsThan := SpinEditDelEventsOlderThan.Value;
 
-  FConfigManager.Config.BeltB := CbBeltB.Checked;
-  FConfigManager.Config.BeltC := CbBeltC.Checked;
-  FConfigManager.Config.BeltD := CbBeltD.Checked;
 end;
 
 
@@ -283,6 +266,8 @@ begin
   // Popola i controlli
   LoadFromConfigManager;
 
+
+  PageControl.ActivePage := TsParametriDatabase;
   // Carica griglia CP800
   /////  ButtonRefreshCP800Click(nil);
 end;
