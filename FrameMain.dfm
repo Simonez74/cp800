@@ -8248,6 +8248,7 @@ object FrameCp800: TFrameCp800
             Width = 50
             Height = 21
             Caption = 'Label1'
+            Visible = False
           end
           object lbl2008: TSimonLabel
             Tag = 1
@@ -8522,25 +8523,6 @@ object FrameCp800: TFrameCp800
             ParentFont = False
             Layout = tlCenter
           end
-          object LblWeightA: TLabel
-            Tag = 2
-            Left = 64
-            Top = 201
-            Width = 112
-            Height = 19
-            Alignment = taCenter
-            AutoSize = False
-            Caption = 'LblWeightA'
-            Color = clSilver
-            Font.Charset = ANSI_CHARSET
-            Font.Color = clWindowText
-            Font.Height = -16
-            Font.Name = 'Arial'
-            Font.Style = [fsBold]
-            ParentColor = False
-            ParentFont = False
-            Transparent = False
-          end
           object lblTotSpeed: TLabel
             Left = 197
             Top = 310
@@ -8601,6 +8583,7 @@ object FrameCp800: TFrameCp800
             Top = 369
             Width = 714
             Height = 28
+            Alignment = taCenter
             Anchors = [akLeft, akRight, akBottom]
             AutoSize = False
             Caption = 'lbl9001'
@@ -8608,6 +8591,25 @@ object FrameCp800: TFrameCp800
             Font.Charset = ANSI_CHARSET
             Font.Color = clWindowText
             Font.Height = -27
+            Font.Name = 'Arial'
+            Font.Style = [fsBold]
+            ParentColor = False
+            ParentFont = False
+            Transparent = False
+          end
+          object lbl4027: TLabel
+            Tag = 1
+            Left = 64
+            Top = 201
+            Width = 112
+            Height = 19
+            Alignment = taCenter
+            AutoSize = False
+            Caption = 'lbl4027'
+            Color = clSilver
+            Font.Charset = ANSI_CHARSET
+            Font.Color = clWindowText
+            Font.Height = -16
             Font.Name = 'Arial'
             Font.Style = [fsBold]
             ParentColor = False
@@ -8635,25 +8637,6 @@ object FrameCp800: TFrameCp800
               Font.Style = [fsBold]
               ParentColor = False
               ParentFont = False
-            end
-            object LblWeightB: TLabel
-              Tag = 2
-              Left = 61
-              Top = 3
-              Width = 112
-              Height = 19
-              Alignment = taCenter
-              AutoSize = False
-              Caption = 'LblWeightB'
-              Color = clSilver
-              Font.Charset = ANSI_CHARSET
-              Font.Color = clWindowText
-              Font.Height = -16
-              Font.Name = 'Arial'
-              Font.Style = [fsBold]
-              ParentColor = False
-              ParentFont = False
-              Transparent = False
             end
             object lbl4016: TLabel
               Tag = 1
@@ -8712,6 +8695,25 @@ object FrameCp800: TFrameCp800
               ParentFont = False
               Transparent = False
             end
+            object lbl4028: TLabel
+              Tag = 1
+              Left = 61
+              Top = 3
+              Width = 112
+              Height = 19
+              Alignment = taCenter
+              AutoSize = False
+              Caption = 'lbl4028'
+              Color = clSilver
+              Font.Charset = ANSI_CHARSET
+              Font.Color = clWindowText
+              Font.Height = -16
+              Font.Name = 'Arial'
+              Font.Style = [fsBold]
+              ParentColor = False
+              ParentFont = False
+              Transparent = False
+            end
           end
           object PanelBeltCenabled: TPanel
             Left = 3
@@ -8734,25 +8736,6 @@ object FrameCp800: TFrameCp800
               Font.Style = [fsBold]
               ParentColor = False
               ParentFont = False
-            end
-            object LblWeightC: TLabel
-              Tag = 2
-              Left = 61
-              Top = 3
-              Width = 112
-              Height = 19
-              Alignment = taCenter
-              AutoSize = False
-              Caption = 'LblWeightC'
-              Color = clSilver
-              Font.Charset = ANSI_CHARSET
-              Font.Color = clWindowText
-              Font.Height = -16
-              Font.Name = 'Arial'
-              Font.Style = [fsBold]
-              ParentColor = False
-              ParentFont = False
-              Transparent = False
             end
             object lbl4017: TLabel
               Tag = 1
@@ -8801,6 +8784,25 @@ object FrameCp800: TFrameCp800
               Alignment = taCenter
               AutoSize = False
               Caption = 'lbl4025'
+              Color = clSilver
+              Font.Charset = ANSI_CHARSET
+              Font.Color = clWindowText
+              Font.Height = -16
+              Font.Name = 'Arial'
+              Font.Style = [fsBold]
+              ParentColor = False
+              ParentFont = False
+              Transparent = False
+            end
+            object lbl4029: TLabel
+              Tag = 1
+              Left = 61
+              Top = 3
+              Width = 112
+              Height = 19
+              Alignment = taCenter
+              AutoSize = False
+              Caption = 'lbl4029'
               Color = clSilver
               Font.Charset = ANSI_CHARSET
               Font.Color = clWindowText
@@ -8891,15 +8893,15 @@ object FrameCp800: TFrameCp800
               ParentColor = False
               ParentFont = False
             end
-            object LblWeightD: TLabel
-              Tag = 2
+            object lbl4030: TLabel
+              Tag = 1
               Left = 61
               Top = 3
               Width = 112
               Height = 19
               Alignment = taCenter
               AutoSize = False
-              Caption = 'LblWeightD'
+              Caption = 'lbl4030'
               Color = clSilver
               Font.Charset = ANSI_CHARSET
               Font.Color = clWindowText

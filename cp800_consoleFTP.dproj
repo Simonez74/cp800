@@ -4,7 +4,7 @@
         <ProjectVersion>20.2</ProjectVersion>
         <FrameworkType>VCL</FrameworkType>
         <Base>True</Base>
-        <Config Condition="'$(Config)'==''">Release</Config>
+        <Config Condition="'$(Config)'==''">Debug</Config>
         <Platform Condition="'$(Platform)'==''">Win32</Platform>
         <ProjectName Condition="'$(ProjectName)'==''">cp800_consoleFTP</ProjectName>
         <TargetedPlatforms>3</TargetedPlatforms>
@@ -134,6 +134,8 @@
         <UWP_DelphiLogo44>cp800_consoleFTP.Artwork\Windows\Uwp_44.png</UWP_DelphiLogo44>
         <UWP_DelphiLogo150>cp800_consoleFTP.Artwork\Windows\Uwp_150.png</UWP_DelphiLogo150>
         <DCC_Define>LICENSED;$(DCC_Define)</DCC_Define>
+        <VerInfo_MajorVer>3</VerInfo_MajorVer>
+        <VerInfo_Keys>CompanyName=;FileDescription=$(MSBuildProjectName);FileVersion=3.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProgramID=com.embarcadero.$(MSBuildProjectName);ProductName=$(MSBuildProjectName);ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win64)'!=''">
         <AppDPIAwarenessMode>PerMonitorV2</AppDPIAwarenessMode>
@@ -148,6 +150,7 @@
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
         <DCCReference Include="FastMM4.pas"/>
+        <DCCReference Include="FastMM4Messages.pas"/>
         <DCCReference Include="Forms.Main.pas">
             <Form>MainForm</Form>
         </DCCReference>

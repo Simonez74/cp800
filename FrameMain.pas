@@ -151,7 +151,6 @@ type
     LblSetPoint: TLabel;
     LblDescProgram9: TLabel;
     LblTotals: TLabel;
-    LblWeightA: TLabel;
     lblTotSpeed: TLabel;
     Bevel1: TBevel;
     lbl5001: TSimonLabel;
@@ -160,13 +159,11 @@ type
     Bevel4: TBevel;
     PanelBeltBenabled: TPanel;
     LblBeltB: TLabel;
-    LblWeightB: TLabel;
     lbl4016: TLabel;
     lbl4020: TLabel;
     lbl4024: TLabel;
     PanelBeltCenabled: TPanel;
     LblBeltC: TLabel;
-    LblWeightC: TLabel;
     lbl4017: TLabel;
     lbl4021: TLabel;
     lbl4025: TLabel;
@@ -175,8 +172,11 @@ type
     lbl4022: TLabel;
     lbl4026: TLabel;
     LblBeltD: TLabel;
-    LblWeightD: TLabel;
     lbl9001: TLabel;
+    lbl4027: TLabel;
+    lbl4028: TLabel;
+    lbl4029: TLabel;
+    lbl4030: TLabel;
     procedure BtnDatiClick(Sender: TObject);
     procedure VirtualImage2Click(Sender: TObject);
     procedure lbl5001CaptionChange(Sender: TObject; const NewCaption: string);
@@ -206,7 +206,7 @@ type
     procedure MonitorError(Sender: TObject; E: Exception);
 
     // Event handlers Weight Monitor
-    procedure MonitorWeight(Sender: TObject; const WeightData: TWeightRecord);
+//    procedure MonitorWeight(Sender: TObject; const WeightData: TWeightRecord);
     procedure MonitorWeightLog(Sender: TObject; const Msg: string);
     procedure MonitorWeightError(Sender: TObject; E: Exception);
 
@@ -324,16 +324,6 @@ begin
 
   SplitView1.Opened := false;
 
-{  // per tutti i tlabel metto caption = string.empty
- for i := 0 to ComponentCount - 1 do // componentCount contiene tutti i componenti posseduti dal container (anche quelli non visivi)
-//  for i := 0 to PanelMain.ControlCount - 1 do // ControlCount contiene solo i controlli visivi effettivamente contenuti nel panel
-  begin
-//   if ( Components[ i ] is TSimonLabel) AND ( Components[ i ].Tag > 0 ) then
-//     TSimonLabel(Components[ i ]).Caption := string.Empty;
-    if ( Components[ i ] is TLabel ) AND ( Components[ i ].Tag > 0 ) then
-      (Components[ i ] as TLabel ).Caption :=string.empty;
-  end;
- }
   PanelBeltBenabled.Visible := FServerCfg.ManagementBeltB;
   PanelBeltCenabled.Visible := FServerCfg.ManagementBeltC;
   PanelBeltDenabled.Visible := FServerCfg.ManagementBeltD;
@@ -342,35 +332,6 @@ begin
   FCodeMap.Clear;
 
   VerificaLabelRicorsivo(PanelMain);
-
- {
-  for i := 0 to PanelMain.ControlCount - 1 do // ControlCount contiene solo i controlli visivi effettivamente contenuti nel panel
-  begin
-
-    if (( panelmain.Controls[i] is TLabel ) AND ( panelmain.Controls[i].Tag > 0 )) then
-//      (( panelmain.Controls[i] is TPanel ) AND ( panelmain.Controls[i].Visible )) then
-      (panelmain.Controls[i] as TLabel ).Caption :=string.empty;
-
-    // per i pannelli contenuto su PanelMain
-    if (panelmain.Controls[i]  is TPanel) then
-    begin
-      LPanel := TPanel(panelmain.Components[i]);
-      for j := 0 to LPanel.ControlCount - 1 do
-      begin
-        if (LPanel.Controls[j] is TLabel) and (TLabel(LPanel.Controls[j]).Tag > 0 ) then
-        begin
-          TLabel(LPanel.Controls[j]).Caption := string.Empty;
-        end;
-      end;
-
-    end;
-
-  end;
-
-   }
-
-  // Costruisco la mappa codice ? label (va dopo il reset delle caption)
- ////// BuildLabelMap;
 
   StatusBar.Panels.Items[0].Text:= Format('%s (%s:%d)',
      [ FServerCfg.Id,  FServerCfg.Host, FServerCfg.Port]);
@@ -472,7 +433,8 @@ begin
 
   // Assegna i callback
   FMonitorWeight.OnParsed := nil;
-  FMonitorWeight.OnWeight := MonitorWeight;
+//  FMonitorWeight.OnWeight := MonitorWeight;
+  FMonitorWeight.OnWeight := nil;
   FMonitorWeight.OnLog := MonitorWeightLog;
   FMonitorWeight.OnError := MonitorWeightError;
 
@@ -753,34 +715,9 @@ end;
 
 
 procedure TFrameCp800.lbl1102CaptionChange(Sender: TObject; const NewCaption: string);
-// var
-//  lNumsessione : integer;
-//  LNomeFile : String;
 begin
-
   AddLog(Memo1, Format(' bl1102CaptionChange: %s', [NewCaption]));
   AggiornaCondizioniLog;
-    {
-  if not Assigned(FMonitorWeight) then
-    Exit;
-
-
-
-//  LNomeFile := concat( FormatDateTime('yyyyddmm' , now()), '_'    );
-  LNomeFile := concat( FormatDateTime('yyyymmdd' , now()), '_',  trim( NewCaption)  );
-//  LNomeFile := concat( FormatDateTime('yyyyddmm' , now()), '_' );
-  lNumsessione :=  ContaFile( IncludeTrailingPathDelimiter( TPath.Combine(  ExtractFilePath(paramstr(0)) , 'Weight')), LNomeFile);
-  if lNumsessione > 0  then
-    LNomeFile := concat ( LNomeFile , '_', lNumsessione.ToString ) ;
-//  lNumsessione := DMIConsole.CalcolaSessione(Cp800id, ExtractNumberInString( NewCaption) );
-
-//  FMonitorWeight.OnProgramNumberChanged(NewCaption);
-
-//////////////  FMonitorWeight.OnProgramNumberChanged(concat(LNomeFile, '.csv'));
-  FMonitorWeight.OnProgramNumberChanged(NewCaption);///
-
-// sistemare  FDownloader.NomeFilePacks := concat(LNomeFile, '.csv');
-    }
 end;
 
 procedure TFrameCp800.lbl5001CaptionChange(Sender: TObject; const NewCaption: string);
@@ -992,6 +929,12 @@ begin
         Lbl4026.Caption := LPairs.Values['4026'];
       end;
 
+      Lbl4027.Caption := LPairs.Values['4027'];
+      Lbl4028.Caption := LPairs.Values['4028'];
+      Lbl4029.Caption := LPairs.Values['4029'];
+      Lbl4030.Caption := LPairs.Values['4030'];
+
+
 
       // start/stop
       Lbl5001.Caption := LPairs.Values['5001'];
@@ -1016,7 +959,7 @@ begin
         Lbl9001.Color := clMedGray;
     //////////////////////  Application.ProcessMessages;
 
-      LabelTime.Caption := FormatDateTime('hh:mm:ss:zzz', now());
+    /////////////////  LabelTime.Caption := FormatDateTime('hh:mm:ss:zzz', now());
 
       (*
       // ========================================
@@ -1040,41 +983,13 @@ begin
 
 end;
 
+(*
 procedure TFrameCp800.MonitorWeight(Sender: TObject; const WeightData: TWeightRecord);
-//var
-//  DisplayText: string;
 begin
-  // Aggiorna label con ultimo peso ricevuto
-{  DisplayText := Format('ID: %s | Channel %s: %s kg | Time: %s', [
-    WeightData.ID,
-    WeightData.GetNonZeroChannel,
-    WeightData.GetNonZeroValue,
-    WeightData.Time
-  ]);
- }
 
   TThread.Queue(nil,
     procedure
     begin
-//////      LabelLastWeight.Caption := DisplayText;
-  //  LabelWeightStatus.Caption := Format('Total records: %s', [WeightData.ID]);
-   {   if WeightData.ValA <> 0 then
-        LblWeightA.Caption := Format('%d g', [WeightData.ValA])
-      else
-        LblWeightA.Caption := '-';
-      if WeightData.ValB <> 0 then
-        LblWeightB.Caption := Format('%d g', [WeightData.ValB])
-      else
-        LblWeightB.Caption := '-';
-      if WeightData.ValC <> 0 then
-        LblWeightC.Caption := Format('%d g', [WeightData.ValC])
-      else
-        LblWeightC.Caption := '-';
-      if WeightData.ValD <> 0 then
-        LblWeightD.Caption := Format('%d g', [WeightData.ValD])
-      else
-        LblWeightD.Caption := '-';
-        }
       if WeightData.ValA <> 0 then
         LblWeightA.Caption := Format('%d g', [WeightData.ValA]);
 
@@ -1086,17 +1001,12 @@ begin
 
       if WeightData.ValD <> 0 then
         LblWeightD.Caption := Format('%d g', [WeightData.ValD]);
-
-
     end);
-
-
-
   // Log opzionale (solo per debug )
   // AddLog(MemoProd, DisplayText);
 
 end;
-
+*)
 procedure TFrameCp800.MonitorWeightError(Sender: TObject; E: Exception);
 begin
    AddLog(MemoProd,'ERROR: ' + E.Message);
