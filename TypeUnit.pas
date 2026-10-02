@@ -31,6 +31,7 @@ type
     ManagementBeltB : boolean;
     ManagementBeltC : boolean;
     ManagementBeltD : boolean;
+    ConnectTimeout : integer; // timeout connessione FTP in ms (da file .ini)
 
     procedure Inizializza;
   end;
@@ -165,6 +166,7 @@ begin
   ManagementBeltB := false;
   ManagementBeltC := false;
   ManagementBeltD := false;
+  ConnectTimeout := 5000;
 
 end;
 

@@ -9,12 +9,11 @@ object FrameConfiguration: TFrameConfiguration
     Top = 34
     Width = 692
     Height = 470
-    ActivePage = TsCp800_setup
+    ActivePage = TsParametriDatabase
     Align = alClient
     TabOrder = 0
     OnChange = PageControlChange
     OnChanging = PageControlChanging
-    ExplicitHeight = 446
     object TsParametriDatabase: TTabSheet
       Caption = 'Params database'
       object lbl1: TLabel
@@ -75,6 +74,13 @@ object FrameConfiguration: TFrameConfiguration
         Layout = tlCenter
         WordWrap = True
       end
+      object lblConnectTimeout: TLabel
+        Left = 167
+        Top = 208
+        Width = 93
+        Height = 15
+        Caption = 'Connect Timeout'
+      end
       object EdMySqlIP: TEdit
         Left = 267
         Top = 23
@@ -90,7 +96,7 @@ object FrameConfiguration: TFrameConfiguration
         Width = 41
         Height = 21
         Caption = 'Test'
-        TabOrder = 6
+        TabOrder = 7
         OnClick = ButtonTestDBClick
       end
       object EdMySqlDbName: TEdit
@@ -140,8 +146,7 @@ object FrameConfiguration: TFrameConfiguration
         Width = 684
         Height = 101
         Align = alBottom
-        TabOrder = 7
-        ExplicitTop = 281
+        TabOrder = 8
       end
       object Panel1: TPanel
         Left = 0
@@ -152,8 +157,7 @@ object FrameConfiguration: TFrameConfiguration
         BevelOuter = bvNone
         Color = clWhite
         ParentBackground = False
-        TabOrder = 8
-        ExplicitTop = 382
+        TabOrder = 9
         object ButtonApply: TButton
           AlignWithMargins = True
           Left = 501
@@ -214,6 +218,14 @@ object FrameConfiguration: TFrameConfiguration
           TabOrder = 2
           OnClick = ButtonCancelClick
         end
+      end
+      object EdtConnectTimeout: TEdit
+        Left = 266
+        Top = 205
+        Width = 131
+        Height = 23
+        NumbersOnly = True
+        TabOrder = 6
       end
     end
     object TsCp800_setup: TTabSheet
@@ -298,8 +310,6 @@ object FrameConfiguration: TFrameConfiguration
         DataSource = DsCp800_setup
         Align = alBottom
         TabOrder = 1
-        ExplicitLeft = -20
-        ExplicitTop = 203
       end
       object PanelDatiDatabase: TPanel
         Left = 0
@@ -392,7 +402,6 @@ object FrameConfiguration: TFrameConfiguration
           Align = alBottom
           Caption = 'Settings Ftp'
           TabOrder = 6
-          ExplicitTop = 89
           object Label45: TLabel
             Left = 9
             Top = 15
@@ -514,7 +523,6 @@ object FrameConfiguration: TFrameConfiguration
           Align = alBottom
           Caption = 'Management'
           TabOrder = 7
-          ExplicitTop = 221
           object DBBeltB: TDBCheckBox
             Left = 12
             Top = 20

@@ -1,4 +1,4 @@
-unit UnitFtpMonitor;
+Ôªøunit UnitFtpMonitor;
 
 interface
 
@@ -71,7 +71,7 @@ type
    function AttendoCompletamento (TimeoutMs: Cardinal = 2000): Boolean;
 
 
-    // Propriet‡ pubbliche di rapido accesso
+    // Propriet√† pubbliche di rapido accesso
     property IntervalMs: Integer read FIntervalMs write FIntervalMs;
 //    property OutputFilePath: string read GetOutputFilePath write SetOutputFilePath;
 //    property WatchKeys: TArray<string> read FWatchKeys write FWatchKeys;
@@ -138,6 +138,7 @@ var
   localUser: string;
   localPass: string;
   localRemoteFile: string;
+  localConnectTimeout: Integer;
 begin
 
   // Copia thread-safe dei parametri di configurazione
@@ -148,6 +149,7 @@ begin
     localUser := FOwner.FServerCfg.Username;
     localPass := FOwner.FServerCfg.Password;
     localRemoteFile := FOwner.RemoteFileDownload ;
+    localConnectTimeout := FOwner.FServerCfg.ConnectTimeout;
   finally
     FOwner.FLock.Leave;
   end;
@@ -163,7 +165,10 @@ begin
     FIdFTP.Port := localPort;
     FIdFTP.Username := localUser;
     FIdFTP.Password := localPass;
-    FIdFTP.ConnectTimeout := 5000;
+    if localConnectTimeout > 0 then
+      FIdFTP.ConnectTimeout := localConnectTimeout
+    else
+      FIdFTP.ConnectTimeout := 5000;
     FIdFTP.ReadTimeout := 5000;
     FIdFTP.OnStatus := FOwner.OnFTPStatus;
 
@@ -197,7 +202,7 @@ begin
 //          pairs := ParseStreamToPairs(ms);
           pairs := ParseStreamFastToPairs(ms);
           try
-            // consegno i pairs al proprietario (quest'ultimo far‡ Queue e liberer‡ la copia)
+            // consegno i pairs al proprietario (quest'ultimo far√† Queue e liberer√† la copia)
             FOwner.DoQueueParsed(pairs);
           finally
             pairs.Free;
@@ -215,7 +220,7 @@ begin
             FOwner.DoQueueError( E);
             FOwner.DoQueueLog('Error ftp get' + e.Message);
 //            Sleep(RETRY_DELAY_MS);
-            // attendi con possibilit‡ di sveglio immediato tramite evento Stop
+            // attendi con possibilit√† di sveglio immediato tramite evento Stop
             waitRes := FOwner.FStopEvent.WaitFor(RETRY_DELAY_MS);
             if waitRes <> wrTimeout then
               Break;
@@ -226,7 +231,7 @@ begin
       end;
 
 //      Sleep(FOwner.FIntervalMs);
-       // Invece di Sleep: aspetto l'evento con timeout (cosÏ Stop sveglia subito il thread)
+       // Invece di Sleep: aspetto l'evento con timeout (cos√¨ Stop sveglia subito il thread)
       waitRes := FOwner.FStopEvent.WaitFor(FOwner.FIntervalMs);
       if waitRes <> wrTimeout then
         Break; // evento segnalato => uscire
@@ -327,8 +332,8 @@ begin
   if not Assigned(FThread) then
     Exit;
 
-  // Segnalo l'evento per svegliare immediatamente il thread se Ë in WaitFor
-  // 1) Segnalo l'evento: se il thread Ë in WaitFor(IntervalMs) esce subito
+  // Segnalo l'evento per svegliare immediatamente il thread se √® in WaitFor
+  // 1) Segnalo l'evento: se il thread √® in WaitFor(IntervalMs) esce subito
   if Assigned(FStopEvent) then
     FStopEvent.SetEvent;
 
@@ -337,7 +342,7 @@ begin
   FThread.WaitFor; // bloccante
   FreeAndNil(FThread);
 
-  // Se non Ë ancora terminato dopo il timeout, lasco che venga liberato altrove.
+  // Se non √® ancora terminato dopo il timeout, lasco che venga liberato altrove.
   DoQueueLog('FTPMonitor stopped');
 end;
 
@@ -409,10 +414,10 @@ begin
   // ========================================
   FLock.Enter;
   try
-    // 1. Copia locale delle propriet‡ condivise
+    // 1. Copia locale delle proprietÔøΩ condivise
     localOnParsed := FOnParsed;
 
-    // Creo una copia filtrata solo se c'Ë un handler
+    // Creo una copia filtrata solo se c'ÔøΩ un handler
     if Assigned(localOnParsed) and assigned(FCodeMap ) then
     begin
       FilteredPairs := TStringList.Create;
@@ -465,10 +470,10 @@ begin
   // ========================================
   FLock.Enter;
   try
-    // 1. Copia locale delle propriet‡ condivise
+    // 1. Copia locale delle propriet√† condivise
     localOnParsed := FOnParsed;
 
-    // Creo una copia filtrata solo se c'Ë un handler
+    // Creo una copia filtrata solo se c'√® un handler
     if Assigned(localOnParsed) and assigned(FCodeMap ) then
     begin
       FilteredPairs := TStringList.Create;

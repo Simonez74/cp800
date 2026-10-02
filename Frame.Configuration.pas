@@ -71,6 +71,8 @@ type
     DBBeltB: TDBCheckBox;
     DBBeltC: TDBCheckBox;
     DBBeltD: TDBCheckBox;
+    EdtConnectTimeout: TEdit;
+    lblConnectTimeout: TLabel;
     procedure ButtonTestDBClick(Sender: TObject);
     procedure ButtonApplyClick(Sender: TObject);
     procedure ButtonSaveClick(Sender: TObject);
@@ -116,7 +118,7 @@ begin
   EdMySqlDbName.OnChange := MarkAsModified;
   EdMySqlUserName.OnChange := MarkAsModified;
   EdMySqlPsw.OnChange := MarkAsModified;
-
+  EdtConnectTimeout.OnChange := MarkAsModified;
   SpinEditDelEventsOlderThan.OnChange := MarkAsModified;
 end;
 
@@ -177,6 +179,7 @@ begin
   EdMySqlDbName.Text := FConfigManager.Config.DBName;
   EdMySqlUserName.Text := FConfigManager.Config.DBUser;
   EdMySqlPsw.Text := FConfigManager.Config.DBPassword;
+  EdtConnectTimeout.Text := FConfigManager.Config.FtpConnectTimeout.ToString;
 //  CheckBoxAutoConnect.Checked := FConfigManager.Config.AutoConnect;
 
   // Generale
@@ -186,6 +189,8 @@ begin
 end;
 
 procedure TFrameConfiguration.SaveToConfigManager;
+var
+   LConnectionTimeOut : integer;
 begin
 if not Assigned(FConfigManager) then
     Exit;
@@ -196,6 +201,8 @@ if not Assigned(FConfigManager) then
   FConfigManager.Config.DBName := EdMySqlDbName.Text;
   FConfigManager.Config.DBUser := EdMySqlUserName.Text;
   FConfigManager.Config.DBPassword := EdMySqlPsw.Text;
+  if TryStrToInt(EdtConnectTimeout.Text, LConnectionTimeOut) then
+    FConfigManager.Config.FtpConnectTimeout := LConnectionTimeOut;
 //  FConfigManager.Config.AutoConnect := CheckBoxAutoConnect.Checked;
 
   // Generale

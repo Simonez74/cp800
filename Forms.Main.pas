@@ -434,6 +434,7 @@ begin
         ServerCfg.ManagementBeltB := QAppo.FieldByName('BeltB').AsBoolean;
         ServerCfg.ManagementBeltC := QAppo.FieldByName('BeltC').AsBoolean;
         ServerCfg.ManagementBeltD := QAppo.FieldByName('BeltD').AsBoolean;
+        ServerCfg.ConnectTimeout := FConfigManager.Config.FtpConnectTimeout;
 
         Fframe.Configure( ServerCfg);
 

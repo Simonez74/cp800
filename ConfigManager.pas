@@ -11,6 +11,7 @@ type
     FDBUser: string;
     FDBPassword: string;
     FDeleteEventsOldsThan: integer;
+    FFtpConnectTimeout: Integer;
   public
     constructor Create;
     // Database
@@ -22,6 +23,8 @@ type
 //    property AutoConnect: Boolean read FAutoConnect write FAutoConnect;
     // Generale
     property DeleteEventsOldsThan: integer read FDeleteEventsOldsThan write FDeleteEventsOldsThan; // elimina eventi registrati più vecchi dei giorni
+    // FTP
+    property FtpConnectTimeout: Integer read FFtpConnectTimeout write FFtpConnectTimeout; // timeout connessione FTP in millisecondi
   end;
 
   TConfigManager = class
@@ -75,6 +78,11 @@ begin
 
  // Generale
     FConfig.DeleteEventsOldsThan := IniFile.ReadInteger('General', 'DeleteEventsOldsThan', 0);
+
+    // FTP
+    FConfig.FtpConnectTimeout := IniFile.ReadInteger('FTP', 'ConnectTimeout', 5000);
+    if FConfig.FtpConnectTimeout <= 0 then
+      FConfig.FtpConnectTimeout := 5000;
   finally
     IniFile.Free;
   end;
@@ -97,6 +105,9 @@ begin
     // Generale
     IniFile.WriteInteger('General', 'DeleteEventsOldsThan', FConfig.DeleteEventsOldsThan);
 
+    // FTP
+    IniFile.WriteInteger('FTP', 'ConnectTimeout', FConfig.FtpConnectTimeout);
+
     IniFile.UpdateFile;  // IMPORTANTE: TMemIniFile scrive su disco solo qui
   finally
     IniFile.Free;
@@ -118,6 +129,7 @@ begin
   FDBPassword := '';
   // FAutoConnect := True;
   FDeleteEventsOldsThan := 0;
+  FFtpConnectTimeout := 5000;
 end;
 
 
