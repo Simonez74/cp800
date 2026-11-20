@@ -28,14 +28,21 @@ type
     FInPeriodoAggiuntivo: Boolean;
     FPeriodoAggiuntivoTimer: TTimer;  // Timer non bloccante per grace period
 
-
+    // Ultime condizioni macchina ricevute e non ancora applicate (protette da FStateLock).
+    // Durante il periodo aggiuntivo vengono solo memorizzate e applicate al termine.
+    FPendProgram: string;
+    FPendInStart: Boolean;
+    FPendPackMode: string;
+    FHasPending: Boolean;
 
     procedure ParseRigaPesi(const Line: string; out WeightData: TWeightRecord);
     procedure ProcessaDatiPesi(const APairs: TStringList);
+    procedure ElaboraCondizioniPendenti;
     procedure ApplicaCambioSituazione (const NuovaSituazione: TSituazioneXLog);
     function BuildOutputFileName(const DsProgram: string): string;
     procedure LeggiUltimoIdProcessato(const ALastIDFile: string);
-    procedure SalvaUltimoIdProcessato(const ALastIDFile: string);
+    procedure SalvaUltimoIdProcessato(const ALastIDFile, AUltimoId: string);
+    procedure QueueWeight(const AOnWeight: TWeightEvent; const AData: TWeightRecord);
 
     // Callback per il timer del periodo aggiuntivo
     procedure OnPeriodoAggiuntivoTerminato(Sender: TObject);
@@ -66,12 +73,17 @@ function ContaFile(const APath, APattern: string): Integer;
 implementation
 
 function ContaFile(const APath, APattern: string): Integer;
+// Conta le sessioni esistenti: APattern.csv + APattern_*.csv
+// (non usa APattern*.csv, altrimenti il programma "P1" conterebbe anche i file di "P10")
 var
   SearchRec: TSearchRec;
   FilePath: string;
 begin
   Result := 0;
-  FilePath := TPath.Combine(APath, APattern + '*.csv');
+  if TFile.Exists(TPath.Combine(APath, APattern + '.csv')) then
+    Inc(Result);
+
+  FilePath := TPath.Combine(APath, APattern + '_*.csv');
 
   if FindFirst(FilePath, faAnyFile, SearchRec) = 0 then
   begin
@@ -107,8 +119,9 @@ begin
   FPeriodoAggiuntivoTimer.OnTimer := OnPeriodoAggiuntivoTerminato;
 
   // Inizializza stato vuoto
-  FillChar(FStatoAttuale, SizeOf(FStatoAttuale), 0);
+  FStatoAttuale := Default(TSituazioneXLog);
   FStatoAttuale.ShouldRun := False;
+  FHasPending := False;
 
   if (FBaseOutputPath <> '') and (not TDirectory.Exists(FBaseOutputPath)) then
     TDirectory.CreateDirectory(FBaseOutputPath);
@@ -119,11 +132,7 @@ begin
   // 1. Disabilita eventi per evitare callback su oggetto in destroy
   OnWeight := nil;
 
-
-  stop;
-
-
-  // 2. Fermo e libero il timer
+  // 2. Fermo e libero il timer (niente periodo aggiuntivo in distruzione)
   if Assigned(FPeriodoAggiuntivoTimer) then
   begin
     FPeriodoAggiuntivoTimer.OnTimer := nil;
@@ -131,17 +140,25 @@ begin
     FreeAndNil(FPeriodoAggiuntivoTimer);
   end;
 
-
-
-
-  // 4. Salvo ultimo ID
-  // salvo ultimo ID prima di distruggere
+  // 3. Blocco eventuali AggiornaCondizioni rientranti e fermo subito il thread
   if Assigned(FStateLock) then
   begin
     FStateLock.Enter;
     try
-      if (FStatoAttuale.LastIDFile <> '') and (FUltimoIdProcessato <> '') then
-        SalvaUltimoIdProcessato(FStatoAttuale.LastIDFile);
+      FInPeriodoAggiuntivo := True;
+      FHasPending := False;
+    finally
+      FStateLock.Leave;
+    end;
+  end;
+  inherited Stop;
+
+  // 4. Salvo ultimo ID prima di distruggere
+  if Assigned(FStateLock) then
+  begin
+    FStateLock.Enter;
+    try
+      SalvaUltimoIdProcessato(FStatoAttuale.LastIDFile, FUltimoIdProcessato);
     finally
       FStateLock.Leave;
     end;
@@ -198,28 +215,36 @@ end;
 
 
 procedure TWeightFtpMonitor.LeggiUltimoIdProcessato(const ALastIDFile: string);
+var
+  LUltimoId: string;
 begin
-  FUltimoIdProcessato := '';
+  LUltimoId := '';
 
   if (ALastIDFile = '') or (not TFile.Exists(ALastIDFile)) then
+    DoQueueLog('LastID file not found, starting from beginning')
+  else
   begin
-    DoQueueLog('LastID file not found, starting from beginning');
-    Exit;
+    try
+      LUltimoId := TFile.ReadAllText(ALastIDFile, TEncoding.UTF8).Trim;
+
+      if LUltimoId <> '' then
+        DoQueueLog(Format('Resumed from ID: %s', [LUltimoId]))
+      else
+        DoQueueLog('LastID file empty, starting from beginning');
+    except
+      on E: Exception do
+      begin
+        DoQueueLog('Error loading LastID: ' + E.Message);
+        LUltimoId := '';
+      end;
+    end;
   end;
 
+  FStateLock.Enter;
   try
-    FUltimoIdProcessato := TFile.ReadAllText(ALastIDFile, TEncoding.UTF8).Trim;
-
-    if FUltimoIdProcessato <> '' then
-      DoQueueLog(Format('Resumed from ID: %s', [FUltimoIdProcessato]))
-    else
-      DoQueueLog('LastID file empty, starting from beginning');
-  except
-    on E: Exception do
-    begin
-      DoQueueLog('Error loading LastID: ' + E.Message);
-      FUltimoIdProcessato := '';
-    end;
+    FUltimoIdProcessato := LUltimoId;
+  finally
+    FStateLock.Leave;
   end;
 end;
 
@@ -229,6 +254,11 @@ begin
   // Fermo il timer
   FPeriodoAggiuntivoTimer.Enabled := False;
 
+  // Fermo davvero il thread FTP. FInPeriodoAggiuntivo resta True fino a stop
+  // concluso: WaitFor esegue le Synchronize pendenti e puÃ² richiamare
+  // AggiornaCondizioni, che cosÃ¬ si limita a memorizzare le condizioni.
+  inherited Stop;
+
   // Termino il periodo aggiuntivo
   FStateLock.Enter;
   try
@@ -237,20 +267,21 @@ begin
     FStateLock.Leave;
   end;
 
-  // Ora ferma davvero il thread FTP
-  inherited Stop;
-
   DoQueueLog('Monitor stopped after grace period');
+
+  // Applico le condizioni arrivate durante il periodo aggiuntivo
+  // (es. ripartenza macchina o cambio programma): senza questo il monitor
+  // resterebbe fermo fino al successivo cambio di stato
+  ElaboraCondizioniPendenti;
 end;
 
-procedure TWeightFtpMonitor.SalvaUltimoIdProcessato(const ALastIDFile: string);
+procedure TWeightFtpMonitor.SalvaUltimoIdProcessato(const ALastIDFile, AUltimoId: string);
 begin
-  if (ALastIDFile = '') or (FUltimoIdProcessato = '') then
+  if (ALastIDFile = '') or (AUltimoId = '') then
     Exit;
 
   try
-    // Scrivi atomicamente
-    TFile.WriteAllText(ALastIDFile, FUltimoIdProcessato, TEncoding.UTF8);
+    TFile.WriteAllText(ALastIDFile, AUltimoId, TEncoding.UTF8);
   except
     on E: Exception do
       DoQueueLog('Error saving LastID: ' + E.Message);
@@ -268,7 +299,11 @@ end;
 procedure TWeightFtpMonitor.Stop;
 //  Override Stop con periodo aggiuntivo NON BLOCCANTE
 begin
-  // Controlla se siamo già in grace period
+  // Niente da fermare: evito di avviare il periodo aggiuntivo a vuoto
+  if not Assigned(FThread) then
+    Exit;
+
+  // Controlla se siamo giï¿½ in grace period
   FStateLock.Enter;
   try
     if FInPeriodoAggiuntivo then
@@ -290,7 +325,7 @@ begin
   FPeriodoAggiuntivoTimer.Interval := FPeriodoAggiuntivoMs;
   FPeriodoAggiuntivoTimer.Enabled := True;
 
-  // Il timer chiamerà OnPeriodoAggiuntivoTerminato dopo FPeriodoAggiuntivoMs millisecondi
+  // Il timer chiamerï¿½ OnPeriodoAggiuntivoTerminato dopo FPeriodoAggiuntivoMs millisecondi
   // Nel frattempo:
   // - UI rimane responsive
   // - Thread FTP continua a scaricare dati
@@ -299,133 +334,142 @@ end;
 
 procedure TWeightFtpMonitor.AggiornaCondizioni(const AProgram: string; AInstart: Boolean; const APackMode: string);
 var
-  NewState: TSituazioneXLog;
-  CurrentProgram: string;
   InAggiuntaPeriodo: Boolean;
 begin
-  // Controllo se siamo in periodo aggiuntivo
+  // Memorizzo sempre le ultime condizioni ricevute
   FStateLock.Enter;
   try
+    FPendProgram := Trim(AProgram);
+    FPendInStart := AInstart;
+    FPendPackMode := Trim(APackMode);
+    FHasPending := True;
     InAggiuntaPeriodo := FInPeriodoAggiuntivo;
   finally
     FStateLock.Leave;
   end;
 
-  // Se siamo in grace period, ignora i cambiamenti di stato
+  // In periodo aggiuntivo NON scarto il cambio: verrÃ  applicato
+  // da OnPeriodoAggiuntivoTerminato a thread fermo
   if InAggiuntaPeriodo then
   begin
-    DoQueueLog('Ignorato cambio stato - AggiornaCondizioni (in periodo aggiuntivo)');
+    DoQueueLog('Cambio stato posticipato (periodo aggiuntivo in corso)');
     Exit;
   end;
 
-  NewState.DsProgram := Trim(AProgram);
-  NewState.InStart := AInstart;
-  NewState.PackMode := Trim(APackMode);
+  ElaboraCondizioniPendenti;
+end;
+
+procedure TWeightFtpMonitor.ElaboraCondizioniPendenti;
+var
+  NewState: TSituazioneXLog;
+  StatoCorrente: TSituazioneXLog;
+  NomeProgramma: string;
+begin
+  NewState := Default(TSituazioneXLog);
+
+  FStateLock.Enter;
+  try
+    if not FHasPending then
+      Exit;
+    NewState.DsProgram := FPendProgram;
+    NewState.InStart := FPendInStart;
+    NewState.PackMode := FPendPackMode;
+    StatoCorrente := FStatoAttuale;
+  finally
+    FStateLock.Leave;
+  end;
+
+  // Cambio programma con thread attivo: prima fermo il thread con il periodo
+  // aggiuntivo (che continua a scrivere sul file del programma precedente).
+  // Le condizioni restano pendenti e vengono applicate a stop concluso.
+  if (NewState.DsProgram <> StatoCorrente.DsProgram) and Assigned(FThread) then
+  begin
+    Stop;
+    Exit;
+  end;
+
+  FStateLock.Enter;
+  try
+    FHasPending := False;
+  finally
+    FStateLock.Leave;
+  end;
 
   // Calcolo se dovrebbe girare in base allo stato macchina
   NewState.ShouldRun := NewState.InStart and
                         (NewState.PackMode <> '3') and
                         (NewState.PackMode <> '4');
 
-  // Leggo il programma corrente in modo thread-safe
-  FStateLock.Enter;
-  try
-    CurrentProgram := FStatoAttuale.DsProgram;
-  finally
-    FStateLock.Leave;
-  end;
-
-  // Costruisco il nome file SOLO se il programma è cambiato (o primo avvio)
-  if (NewState.DsProgram <> '') and (NewState.DsProgram <> CurrentProgram) then
-  begin
-    NewState.OutputFileName := BuildOutputFileName(NewState.DsProgram);
-    NewState.LastIDFile := ChangeFileExt(NewState.OutputFileName, '.lastid');
-  end
-  else if NewState.DsProgram <> '' then
+  if (NewState.DsProgram = StatoCorrente.DsProgram) and (StatoCorrente.OutputFileName <> '') then
   begin
     // Programma invariato: riutilizzo i percorsi dello stato corrente
-    FStateLock.Enter;
-    try
-      NewState.OutputFileName := FStatoAttuale.OutputFileName;
-      NewState.LastIDFile := FStatoAttuale.LastIDFile;
-    finally
-      FStateLock.Leave;
-    end;
+    NewState.OutputFileName := StatoCorrente.OutputFileName;
+    NewState.LastIDFile := StatoCorrente.LastIDFile;
   end
   else
   begin
-//    NewState.OutputFileName := '';
-//    NewState.LastIDFile := '';
-    NewState.OutputFileName := BuildOutputFileName('BlankProgramm');
-    NewState.LastIDFile := ChangeFileExt(NewState.OutputFileName, '.lastid');;
-
-
+    // Programma cambiato (o primo avvio): nuovo file di sessione
+    if NewState.DsProgram <> '' then
+      NomeProgramma := NewState.DsProgram
+    else
+      NomeProgramma := 'BlankProgramm';
+    NewState.OutputFileName := BuildOutputFileName(NomeProgramma);
+    NewState.LastIDFile := ChangeFileExt(NewState.OutputFileName, '.lastid');
   end;
 
-  // Applico il cambio di stato IMMEDIATAMENTE
   ApplicaCambioSituazione(NewState);
 end;
 
 procedure TWeightFtpMonitor.ApplicaCambioSituazione(const NuovaSituazione: TSituazioneXLog);
+// Chiamata solo da ElaboraCondizioniPendenti: se cambia il file di output
+// il thread Ã¨ sicuramente fermo
 var
   VecchiaSituazione: TSituazioneXLog;
-  NeedRestart: Boolean;
+  CambioStato: Boolean;
+  CambioFile: Boolean;
 begin
   FStateLock.Enter;
   try
     VecchiaSituazione := FStatoAttuale;
-
-    if not NuovaSituazione.HasChanged(VecchiaSituazione) then
-      Exit;
+    CambioStato := NuovaSituazione.HasChanged(VecchiaSituazione);
+    CambioFile := NuovaSituazione.LastIDFile <> VecchiaSituazione.LastIDFile;
 
     // Salvo ultimo ID del file vecchio
-    if (VecchiaSituazione.LastIDFile <> '') and (FUltimoIdProcessato <> '') then
-      SalvaUltimoIdProcessato(VecchiaSituazione.LastIDFile);
+    if CambioFile then
+      SalvaUltimoIdProcessato(VecchiaSituazione.LastIDFile, FUltimoIdProcessato);
 
     FStatoAttuale := NuovaSituazione;
-    NeedRestart := (NuovaSituazione.DsProgram <> VecchiaSituazione.DsProgram);
   finally
     FStateLock.Leave;
   end;
 
-  DoQueueLog(Format('State change: Prog=%s, Run=%s, Mode=%s', [
-    NuovaSituazione.DsProgram,
-    BoolToStr(NuovaSituazione.InStart, True),
-    NuovaSituazione.PackMode
-  ]));
+  if CambioStato then
+    DoQueueLog(Format('State change: Prog=%s, Run=%s, Mode=%s', [
+      NuovaSituazione.DsProgram,
+      BoolToStr(NuovaSituazione.InStart, True),
+      NuovaSituazione.PackMode
+    ]));
 
-  if NeedRestart then
+  if CambioFile then
   begin
-    if Assigned(FThread) then
-      Stop;
-
     // Carico ultimo ID del file nuovo
     LeggiUltimoIdProcessato(NuovaSituazione.LastIDFile);
 
     if NuovaSituazione.OutputFileName <> '' then
     begin
-//      OutputFilePath := NewState.OutputFileName;
       DoQueueLog('Output file: ' + ExtractFileName(NuovaSituazione.OutputFileName));
       DoQueueLog('LastID file: ' + ExtractFileName(NuovaSituazione.LastIDFile));
     end;
   end;
 
+  // Allineo sempre il thread allo stato desiderato (Start/Stop loggano giÃ )
   if NuovaSituazione.ShouldRun and NuovaSituazione.IsValid then
   begin
     if not Assigned(FThread) then
-    begin
       Start;
-      DoQueueLog('Monitor started');
-    end;
   end
-  else
-  begin
-    if Assigned(FThread) then
-    begin
-      Stop;
-      DoQueueLog('Monitor stopped');
-    end;
-  end;
+  else if Assigned(FThread) then
+    Stop;
 end;
 
 function TWeightFtpMonitor.GetCurrentState: TSituazioneXLog;
@@ -443,7 +487,8 @@ var
   Parts: TArray<string>;
   Values: TArray<string>;
 begin
-  FillChar(WeightData, SizeOf(WeightData), 0);
+  // Default() e non FillChar: il record contiene stringhe (tipi gestiti)
+  WeightData := Default(TWeightRecord);
   WeightData.RawLine := Line;
 
   Parts := Line.Split(['=']);
@@ -476,15 +521,21 @@ var
   AttualeOutputFileName, AttualeLastIDFile: string;
   ProcessedCount: Integer;
   LocalOnWeight : TWeightEvent;
+  UltimoIdIniziale, UltimoId: string;
+  Righe: TStringBuilder;
 begin
+  // FUltimoIdProcessato Ã¨ condiviso con il thread principale:
+  // lavoro su una copia locale e la riscrivo sotto lock alla fine
   FStateLock.Enter;
   try
     LocalOnWeight := FOnWeight;
     AttualeOutputFileName := FStatoAttuale.OutputFileName;
     AttualeLastIDFile := FStatoAttuale.LastIDFile;
+    UltimoIdIniziale := FUltimoIdProcessato;
   finally
     FStateLock.Leave;
   end;
+  UltimoId := UltimoIdIniziale;
 
   if AttualeOutputFileName = '' then
   begin
@@ -496,12 +547,12 @@ begin
   ProcessedCount := 0;
 
   // Cerco ultimo ID processato per evitare duplicati
-  if FUltimoIdProcessato <> '' then
+  if UltimoId <> '' then
   begin
     for i := 0 to APairs.Count - 1 do
     begin
       Line := APairs[i];
-      if Line.StartsWith(FUltimoIdProcessato + '=') then
+      if Line.StartsWith(UltimoId + '=') then
       begin
         StartIndex := i + 1;
         Break;
@@ -509,65 +560,82 @@ begin
     end;
   end;
 
-  // Processo righe nuove
-  for i := StartIndex to APairs.Count - 1 do
-  begin
-    Line := APairs[i];
-    if Line.Trim = '' then
-      Continue;
-
-    ParseRigaPesi(Line, WeightData);
-
-    if WeightData.ID = '' then
-      Continue;
-
-    FUltimoIdProcessato := WeightData.ID;
-
-    if WeightData.HasNonZeroWeight then
+  // Accumulo le righe e scrivo il CSV una sola volta per ciclo
+  // (prima il file veniva aperto/chiuso per ogni riga)
+  Righe := TStringBuilder.Create;
+  try
+    // Processo righe nuove
+    for i := StartIndex to APairs.Count - 1 do
     begin
-      Inc(ProcessedCount);
-      try
-        TFile.AppendAllText(
-          AttualeOutputFileName,
-          Format('%s;%s;%s'#13#10, [
-            WeightData.ID,
-            WeightData.GetNonZeroChannel,
-            WeightData.GetNonZeroValue
-          ]),
-          TEncoding.UTF8
-        );
+      Line := APairs[i];
+      if Line.Trim = '' then
+        Continue;
 
-      except
-        on E: Exception do
-          DoQueueLog('Write error: ' + E.Message);
-      end;
+      ParseRigaPesi(Line, WeightData);
 
+      if WeightData.ID = '' then
+        Continue;
 
-//      if Assigned(FOnWeight) then
-      if Assigned(LocalOnWeight) then
+      UltimoId := WeightData.ID;
+
+      if WeightData.HasNonZeroWeight then
       begin
-        TThread.Queue(nil,
-          procedure
-          var
-            LocalData: TWeightRecord;
-          begin
-            LocalData := WeightData;
-            try
-//              FOnWeight(Self, LocalData);
-              LocalOnWeight(Self, LocalData);
-            except
-            end;
-          end);
+        Inc(ProcessedCount);
+        Righe.AppendFormat('%s;%s;%s'#13#10, [
+          WeightData.ID,
+          WeightData.GetNonZeroChannel,
+          WeightData.GetNonZeroValue
+        ]);
+
+        if Assigned(LocalOnWeight) then
+          QueueWeight(LocalOnWeight, WeightData);
       end;
     end;
+
+    if Righe.Length > 0 then
+    try
+      TFile.AppendAllText(AttualeOutputFileName, Righe.ToString, TEncoding.UTF8);
+    except
+      on E: Exception do
+        DoQueueLog('Write error: ' + E.Message);
+    end;
+  finally
+    Righe.Free;
   end;
 
-  // Salvo ultimo ID dopo processing
-  if (ProcessedCount > 0) and (FUltimoIdProcessato <> '') and (AttualeLastIDFile <> '') then
+  // Salvo ultimo ID dopo processing (anche se le righe nuove avevano peso zero)
+  if UltimoId <> UltimoIdIniziale then
   begin
-    SalvaUltimoIdProcessato(AttualeLastIDFile);
-    DoQueueLog(Format('Processed %d records, LastID: %s', [ProcessedCount, FUltimoIdProcessato]));
+    FStateLock.Enter;
+    try
+      FUltimoIdProcessato := UltimoId;
+    finally
+      FStateLock.Leave;
+    end;
+    SalvaUltimoIdProcessato(AttualeLastIDFile, UltimoId);
+    if ProcessedCount > 0 then
+      DoQueueLog(Format('Processed %d records, LastID: %s', [ProcessedCount, UltimoId]));
   end;
+end;
+
+procedure TWeightFtpMonitor.QueueWeight(const AOnWeight: TWeightEvent; const AData: TWeightRecord);
+// Metodo separato: la closure cattura una copia del record per ogni chiamata.
+// Catturando direttamente la variabile del ciclo tutte le callback
+// accodate avrebbero ricevuto l'ultimo record.
+var
+  LData: TWeightRecord;
+  LOnWeight: TWeightEvent;
+begin
+  LData := AData;
+  LOnWeight := AOnWeight;
+  TThread.Queue(TThread.CurrentThread,
+    procedure
+    begin
+      try
+        LOnWeight(Self, LData);
+      except
+      end;
+    end);
 end;
 
 procedure TWeightFtpMonitor.DoQueueParsed(const APairs: TStringList);
@@ -576,7 +644,7 @@ var
 begin
   ProcessaDatiPesi(APairs);
 
-  // Se c'è un handler OnParsed collegato, lo chiamo direttamente
+  // Se c'ï¿½ un handler OnParsed collegato, lo chiamo direttamente
   // nel thread principale (senza passare per inherited che farebbe
   // una copia ridondante e un lock aggiuntivo)
   localOnParsed := OnParsed;

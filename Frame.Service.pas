@@ -56,32 +56,35 @@ begin
 end;
 
 procedure TFrameService.ButDeleteOldsClick(Sender: TObject);
+var
+  LDataLimite: TDate;
 begin
+  // Leggo il controllo VCL nel thread principale, NON dentro il task
+  LDataLimite := DeleteOlds_DateTimePicker.Date;
+  ButDeleteOlds.Enabled := False;
+  lblResult.Caption := '';
+
   // Esegui scrittura DB in background
   TTask.Run(
     procedure
     var
-      Ldate: string;
       Success: Boolean;
       ErrorMsg: string;
+      Conn: TFDConnection;
       QDelete : TFDQuery;
     begin
-      ldate := FormatDateTime('yyyy/mm/dd',  DeleteOlds_DateTimePicker.date );
       Success := False;
       ErrorMsg := '';
 
-
+      Conn := nil;
       Qdelete := TFDQuery.Create(nil);
       try
-        QDelete.Connection := DMIConsole.FDConnection;
         try
-          ldate := FormatDateTime('yyyy/mm/dd',  DeleteOlds_DateTimePicker.date );
-      //    LDate :=  IntToStr(DateToyyyymmdd(DeleteOlds_DateTimePicker.Date));
-          QDelete.SQL.Clear;
-          QDelete.sql.Add('delete from cp800Storico ');
-          QDelete.sql.Add('where ');
-          QDelete.sql.Add(' Date(DataTime) <  ' + quotedstr(LDate) );
-
+          // connessione dedicata: FDConnection è usata dal thread principale
+          Conn := DMIConsole.CreaConnessioneDedicata;
+          QDelete.Connection := Conn;
+          QDelete.SQL.Text := 'delete from cp800Storico where Date(DataTime) < :datalimite';
+          QDelete.ParamByName('datalimite').AsDate := LDataLimite;
           QDelete.ExecSQL;
           Success := True;
         except
@@ -90,15 +93,17 @@ begin
         end;
       finally
         QDelete.Free;
+        Conn.Free;
       end;
       // Ritorna al thread principale per il log
       TThread.Queue(nil,
         procedure
         begin
+          ButDeleteOlds.Enabled := True;
           if Success then
             lblResult.Caption:='Historical deletion successfully completed'
           else
-            lblResult.Caption:= 'Error on Historical deletion';
+            lblResult.Caption:= 'Error on Historical deletion: ' + ErrorMsg;
         end);
     end);
 end;

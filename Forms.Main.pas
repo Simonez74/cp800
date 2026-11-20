@@ -39,7 +39,7 @@ uses
   //MyThreadLog
   ,System.Threading
   ,DMI_Console,  TypeUnit, MyThreadLog,   funzioni
-  , system.DateUtils, Frame.Service;
+  , system.DateUtils, Frame.Service, Forms.Licenza;
 
 const
 //   FTPData_056.txt
@@ -77,7 +77,15 @@ type
     MemoConnectionError: TMemo;
     ButtonRetryConnection: TButton;
     ToolButtonDeleteHistorical: TToolButton;
-    ToolButton2: TToolButton;
+    ToolButtonLicenza: TToolButton;
+    PanelTopLine: TPanel;
+    PanelDBStatus: TPanel;
+    ShapeDBStatus: TShape;
+
+    // contenitori interni del pannello connessione
+    PanelConnectionCard: TPanel;
+    PanelConnectionIndicator: TPanel;
+    PanelConnectionButtons: TPanel;
 
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -88,8 +96,13 @@ type
     procedure ToolButtonConfigClick(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure ToolButtonDeleteHistoricalClick(Sender: TObject);
+    procedure ToolButtonLicenzaClick(Sender: TObject);
+    procedure FormResize(Sender: TObject);
+    procedure FormAfterMonitorDpiChanged(Sender: TObject; OldDPI, NewDPI: Integer);
+    procedure PanelCenterResize(Sender: TObject);
   private
     { Private declarations }
+    FLicenzaTesto: string;
     FFrameList: TObjectList<TFrameCp800>;
     FFrameConfig: TFrameConfiguration;
     FFrameService: TFrameService;
@@ -101,6 +114,8 @@ type
     procedure ShowConnectionPanel(const AMessage: string; AShowRetry: Boolean = False);
     procedure HideConnectionPanel;
     procedure UpdateConnectionStatus(const AStatus: string; AColor: TColor);
+    procedure CenterConnectionPanel;
+    procedure AggiornaInfoLicenza;
 
     procedure ConnectToDatabase;
     procedure CreatePanels;
@@ -111,6 +126,9 @@ type
 
     // callback per liberare FramService
     procedure FrameServiceClose(Sender : TObject);
+    // callback pulsante Chiudi del frame configurazione
+    procedure FrameConfigClose(Sender : TObject);
+    procedure MostraVistaPrincipale;
   public
     { Public declarations }
   end;
@@ -126,12 +144,92 @@ implementation
 
 {$R *.dfm}
 
+uses
+  System.Math, LicenseCore;
+
 //uses Myfunc.Utils, Myfunc.Strings;
 //uses Myfunc.Utils;
 
-{ TForm1 }
+const
+  // palette interfaccia (BGR)
+  CLR_OK       = $004A9E2E; // verde
+  CLR_ERR      = $003834D1; // rosso
+  CLR_WAIT     = $0000A1E0; // ambra
+  CLR_ACCENT   = $00C06700; // blu icone
+  CLR_DISABLED = $00A0A0A0;
 
 
+
+
+
+{ TMainForm }
+
+procedure TMainForm.AggiornaInfoLicenza;
+var
+  Info: TLicenseInfo;
+  Stato: TLicenseState;
+begin
+  try
+    Stato := StatoLicenza(Info);
+    if Stato = lsValid then
+      FLicenzaTesto := 'Licenza: ' + Info.Cliente
+    else
+      FLicenzaTesto := 'Licenza: ' + LicenseStateText(Stato);
+  except
+    on E: Exception do
+    begin
+      FLicenzaTesto := 'Licenza: n/d';
+      LogToFile('Errore lettura stato licenza: ' + E.Message);
+    end;
+  end;
+end;
+
+procedure TMainForm.CenterConnectionPanel;
+var
+  W, H, AreaTop, AreaH: Integer;
+begin
+  if not PanelConnection.Visible then
+    Exit;
+
+  // card piu' alta solo quando mostra il dettaglio errore
+  W := Min(ScaleValue(480), ClientWidth - ScaleValue(32));
+  if MemoConnectionError.Visible then
+    H := ScaleValue(380)
+  else
+    H := ScaleValue(170);
+
+  AreaTop := PanelTopLine.Top + PanelTopLine.Height;
+  AreaH := ClientHeight - AreaTop - StatusBar1.Height;
+  H := Min(H, AreaH - ScaleValue(16));
+
+  PanelConnection.SetBounds((ClientWidth - W) div 2, AreaTop + (AreaH - H) div 2, W, H);
+end;
+
+procedure TMainForm.FormResize(Sender: TObject);
+begin
+  CenterConnectionPanel;
+end;
+
+procedure TMainForm.FormAfterMonitorDpiChanged(Sender: TObject; OldDPI, NewDPI: Integer);
+begin
+  CenterConnectionPanel;
+end;
+
+procedure TMainForm.PanelCenterResize(Sender: TObject);
+var
+  Panel: TWinControl;
+  C: TControl;
+  I: Integer;
+begin
+  // centra i controlli figli (indicatore di attivita' / pulsante Riprova)
+  Panel := Sender as TWinControl;
+  for I := 0 to Panel.ControlCount - 1 do
+  begin
+    C := Panel.Controls[I];
+    C.SetBounds((Panel.ClientWidth - C.Width) div 2, (Panel.ClientHeight - C.Height) div 2,
+      C.Width, C.Height);
+  end;
+end;
 
 
 procedure TMainForm.FormCreate(Sender: TObject);
@@ -156,6 +254,7 @@ begin
   FFrameConfig.Parent := PanelConfig;
   FFrameConfig.Align := alClient;
   FFrameConfig.SetConfigManager(FConfigManager);
+  FFrameConfig.OnCloseRequest := FrameConfigClose;
 
   FConfigVisible := False;
 
@@ -164,6 +263,9 @@ begin
 
   // Configurazione degli ApplicationEvents
   ApplicationEvents1.OnException := ApplicationEvents1Exception;
+
+  UpdateConnectionStatus('Database: Non connesso', CLR_ERR);
+  AggiornaInfoLicenza;
 end;
 
 procedure TMainForm.FormShow(Sender: TObject);
@@ -176,16 +278,32 @@ begin
   ConnectToDatabase;
 end;
 
+procedure TMainForm.FrameConfigClose(Sender: TObject);
+begin
+  // stesso percorso del pulsante Config della toolbar (modifiche non salvate, ricreazione frame)
+  if FConfigVisible then
+    ToggleConfigPanel;
+end;
+
+procedure TMainForm.MostraVistaPrincipale;
+begin
+  PanelConfig.Visible := False;
+  PanelMain.Visible := True;
+  PanelMain.BringToFront;
+  // il pannello connessione (se visibile) deve restare sopra le tab
+  if PanelConnection.Visible then
+    PanelConnection.BringToFront;
+end;
+
 procedure TMainForm.FrameServiceClose(Sender: TObject);
 begin
   // nascondo il frame
   if Assigned(FFrameService) then
     FFrameService.Visible := False;
+  FFrameConfig.Visible := True;
 
   // Nascondo pannello configurazione
-  PanelConfig.Visible := False;
-  PanelMain.Visible := True;
-  PanelMain.BringToFront;
+  MostraVistaPrincipale;
 
   ToolButtonConfig.Enabled := true;
   ToolButtonDeleteHistorical.Enabled := true;
@@ -218,16 +336,24 @@ end;
 
 procedure TMainForm.ShowConnectionPanel(const AMessage: string; AShowRetry: Boolean);
 begin
-  PanelConnection.Visible := True;
-  PanelConnection.BringToFront;
-
   LabelConnectionStatus.Caption := AMessage;
+
+  // in attesa: solo indicatore; in errore: dettaglio + pulsante Riprova
   AnimationConnection.Animate := not AShowRetry;
+  PanelConnectionIndicator.Visible := not AShowRetry;
+  PanelConnectionButtons.Visible := AShowRetry;
   ButtonRetryConnection.Visible := AShowRetry;
   MemoConnectionError.Visible := AShowRetry;
 
   if not AShowRetry then
+  begin
     MemoConnectionError.Lines.Clear;
+    UpdateConnectionStatus('Database: connessione in corso...', CLR_WAIT);
+  end;
+
+  PanelConnection.Visible := True;
+  CenterConnectionPanel;
+  PanelConnection.BringToFront;
 end;
 
 procedure TMainForm.StopAllMonitors;
@@ -329,8 +455,10 @@ end;
 
 procedure TMainForm.UpdateConnectionStatus(const AStatus: string; AColor: TColor);
 begin
+  // testo sempre leggibile, lo stato e' dato dal colore del pallino
   LabelDBStatus.Caption := AStatus;
-  LabelDBStatus.Font.Color := AColor;
+  LabelDBStatus.Hint := AStatus;
+  ShapeDBStatus.Brush.Color := AColor;
 
   if Assigned(StatusBar1) and (StatusBar1.Panels.Count > 0) then
     StatusBar1.Panels[0].Text := AStatus;
@@ -435,6 +563,7 @@ begin
         ServerCfg.ManagementBeltC := QAppo.FieldByName('BeltC').AsBoolean;
         ServerCfg.ManagementBeltD := QAppo.FieldByName('BeltD').AsBoolean;
         ServerCfg.ConnectTimeout := FConfigManager.Config.FtpConnectTimeout;
+        ServerCfg.ReadTimeout := FConfigManager.Config.FtpReadTimeout;
 
         Fframe.Configure( ServerCfg);
 
@@ -508,8 +637,8 @@ begin
   // Pannello 2: Ultimo aggiornamento
   StatusBar1.Panels[2].Text := 'Ultimo aggiornamento: ' + FormatDateTime('hh:nn:ss', Now);
 
-  // Pannello 3: Vuoto (per eventuali usi futuri)
-  StatusBar1.Panels[3].Text := '';
+  // Pannello 3: cliente della licenza
+  StatusBar1.Panels[3].Text := FLicenzaTesto;
 end;
 
 
@@ -531,7 +660,7 @@ begin
   end;
 
 
-  LogToFile('Connessione al database riuscita: ' +
+  LogToFile('Connessione al database in corso: ' +
                 FConfigManager.Config.DBHost + ':' +
                 FConfigManager.Config.DBPort.ToString);
 
@@ -575,7 +704,11 @@ begin
             if ConnResult.Success then
             begin
               HideConnectionPanel;
-              UpdateConnectionStatus('Database: Connesso', clGreen);
+              UpdateConnectionStatus('Database: Connesso', CLR_OK);
+              // se nel frattempo l'utente e' entrato in configurazione i frame
+              // verranno creati all'uscita (ToggleConfigPanel)
+              if FConfigVisible then
+                Exit;
               // Carico le macchine
               try
                 CreatePanels;
@@ -591,12 +724,10 @@ begin
             else
             begin
               // Connessione fallita
-              UpdateConnectionStatus('Database: Non connesso', clRed);
+              UpdateConnectionStatus('Database: Non connesso', CLR_ERR);
               UpdateStatusBar;
 
               MemoConnectionError.Lines.Clear;
-              MemoConnectionError.Lines.Add('Impossibile connettersi al database');
-              MemoConnectionError.Lines.Add('');
               MemoConnectionError.Lines.Add('Dettagli errore:');
               MemoConnectionError.Lines.Add(Format('[%s] %s',
                                                   [ConnResult.ErrorClass,
@@ -611,8 +742,7 @@ begin
               MemoConnectionError.Lines.Add(Format('Tentativi effettuati: %d',
                                                   [DMIConsole.ConnectionAttempts]));
 
-              ShowConnectionPanel('', True);  // Mostra pannello con bottone Retry
-              ButtonRetryConnection.Visible := True;
+              ShowConnectionPanel('Impossibile connettersi al database', True);
             end;
           end
         );
@@ -624,7 +754,7 @@ begin
             procedure
             begin
               ShowConnectionPanel('Errore di connessione: ' + E.Message, True);
-              UpdateConnectionStatus('Database: Errore', clRed);
+              UpdateConnectionStatus('Database: Errore', CLR_ERR);
             end
           );
         end;
@@ -652,8 +782,9 @@ begin
                [],
                    5000) <> mrYes then
       begin
-        // Annulla
+        // Annulla: il click su un tbsCheck ha gia' abbassato il pulsante
         FConfigVisible := False;
+        ToolButtonConfig.Down := False;
         Exit;
       end;
     end;
@@ -682,19 +813,29 @@ begin
       while MainPageControl.PageCount > 0 do
         MainPageControl.Pages[0].Free;
 
-      // Mostro pannello configurazione
+      // l'eventuale pannello connessione/errore DB non deve restare sotto la configurazione
+      HideConnectionPanel;
+
+      // Mostro pannello configurazione (solo il frame configurazione, non il Service)
+      if Assigned(FFrameService) then
+        FFrameService.Visible := False;
+      FFrameConfig.Visible := True;
       PanelConfig.Visible := True;
       PanelConfig.Align := alClient;
       PanelConfig.BringToFront;
       PanelMain.Visible := False;
 
-      FFrameConfig.LoadConfiguration;
+      // durante la configurazione il servizio storico non e' disponibile
+      ToolButtonDeleteHistorical.Enabled := False;
       ToolButtonConfig.Down := True;
+      ToolButtonConfig.Caption := 'Chiudi config';
+
+      FFrameConfig.LoadConfiguration;
 
       LogToFile('Configuration panel opened');
     except
       on E: Exception do
-      LogToFile('FormClose - Error during StopAllMonitors: ' + E.Message);
+      LogToFile('ToggleConfigPanel - Error opening configuration: ' + E.Message);
     end;
   end
   else
@@ -713,48 +854,35 @@ begin
                    5000)
       of
         mrYes:
-        begin
           // Salvo configurazione
           FFrameConfig.SaveConfiguration;
-/////////          ApplyConfigurationToApp;
-
-          // Riconnetto al database se necessario
-          if not FDatabaseConnected then
-          begin
-//            ShowMessage('Connecting to the database in progress...');
-            // Mostra pannello (gira nel thread principale)
-            ShowConnectionPanel('Connessione al database in corso...', False);
-            ConnectToDatabase;
-            Exit; // CreatePanels verrà chiamato dentro ConnectToDatabase → Synchronize
-          end;
-        end;
         mrNo:
-        begin
           // Ricarico configurazione originale (scarto modifiche)
           FFrameConfig.LoadConfiguration;
-        end;
-
-        mrCancel:
-        begin
-          // Rimango in configurazione
-          FConfigVisible := True;
-          PanelConfig.Visible := True;
-          ToolButtonConfig.Down := True;
-          Exit;
-        end;
+      else
+        // Annulla / dialogo chiuso: rimango in configurazione
+        FConfigVisible := True;
+        ToolButtonConfig.Down := True;
+        Exit;
       end;
     end;
 
-    // Nascondo pannello configurazione
-    PanelConfig.Visible := False;
-    PanelMain.Visible := True;
-    PanelMain.BringToFront;
+    // Torno SEMPRE alla vista principale, qualunque sia lo stato del database
+    MostraVistaPrincipale;
     ToolButtonConfig.Down := False;
+    ToolButtonConfig.Caption := 'Config';
+    ToolButtonDeleteHistorical.Enabled := True;
 
-    // ← UNICA CHIAMATA: stesso codice di FormShow → ConnectToDatabase
-    CreatePanels;
     // RICREO TUTTO
-//    ExitConfigurationMode;
+    if FDatabaseConnected then
+      CreatePanels
+    else
+    begin
+      // database non connesso (es. parametri appena corretti): riprovo la connessione,
+      // CreatePanels viene chiamato da ConnectToDatabase → Synchronize
+      ShowConnectionPanel('Connessione al database in corso...', False);
+      ConnectToDatabase;
+    end;
 
     LogToFile('Configuration panel closed');
   end;
@@ -777,6 +905,12 @@ begin
     FFrameService.OnCloseRequest := FrameServiceClose;
   end;
 
+  // PanelConfig contiene anche il frame configurazione: mostro solo il Service
+  // (dopo una prima chiusura il Service era rimasto nascosto)
+  FFrameConfig.Visible := False;
+  FFrameService.Visible := True;
+  FFrameService.BringToFront;
+
   PanelConfig.Visible := True;
   PanelConfig.Align := alClient;
   PanelConfig.BringToFront;
@@ -785,6 +919,14 @@ begin
   ToolButtonConfig.Enabled := false;
   ToolButtonDeleteHistorical.Enabled := false;
 
+end;
+
+procedure TMainForm.ToolButtonLicenzaClick(Sender: TObject);
+begin
+  // Consultazione / sostituzione della licenza: i monitor continuano a girare
+  MostraLicenza;
+  AggiornaInfoLicenza;
+  UpdateStatusBar;
 end;
 
 procedure TMainForm.ApplicationEvents1Exception(Sender: TObject; E: Exception);
@@ -851,7 +993,7 @@ begin
   end;
 
   // Per tutto il resto: loggo e notifico senza bloccare
-  UpdateConnectionStatus('ERRORE: ' + E.Message, clRed);
+  UpdateConnectionStatus('ERRORE: ' + E.Message, CLR_ERR);
   LogToFile('Non-critical exception handled, continuing.');
 end;
 

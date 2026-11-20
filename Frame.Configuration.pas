@@ -73,6 +73,9 @@ type
     DBBeltD: TDBCheckBox;
     EdtConnectTimeout: TEdit;
     lblConnectTimeout: TLabel;
+    Label1: TLabel;
+    EdtReadTimeout: TEdit;
+    btnChiudi: TButton;
     procedure ButtonTestDBClick(Sender: TObject);
     procedure ButtonApplyClick(Sender: TObject);
     procedure ButtonSaveClick(Sender: TObject);
@@ -80,10 +83,12 @@ type
     procedure PageControlChanging(Sender: TObject; var AllowChange: Boolean);
     procedure PageControlChange(Sender: TObject);
     procedure Qcp800_setupBeforePost(DataSet: TDataSet);
+    procedure btnChiudiClick(Sender: TObject);
   private
     { Private declarations }
     FConfigManager: TConfigManager;  // Riferimento al manager
     FModified: Boolean;
+    FOnCloseRequest: TNotifyEvent;
 
     procedure SetModified(const Value: Boolean);
     procedure MarkAsModified(Sender: TObject);
@@ -100,6 +105,8 @@ type
     procedure ApplyConfiguration; // Applica senza salvare
 
     property Modified: Boolean read FModified write SetModified;
+    // chiusura richiesta dal pulsante Chiudi: la gestisce la form principale
+    property OnCloseRequest: TNotifyEvent read FOnCloseRequest write FOnCloseRequest;
   end;
 
 implementation
@@ -119,6 +126,7 @@ begin
   EdMySqlUserName.OnChange := MarkAsModified;
   EdMySqlPsw.OnChange := MarkAsModified;
   EdtConnectTimeout.OnChange := MarkAsModified;
+  EdtReadTimeout.OnChange := MarkAsModified;
   SpinEditDelEventsOlderThan.OnChange := MarkAsModified;
 end;
 
@@ -180,6 +188,7 @@ begin
   EdMySqlUserName.Text := FConfigManager.Config.DBUser;
   EdMySqlPsw.Text := FConfigManager.Config.DBPassword;
   EdtConnectTimeout.Text := FConfigManager.Config.FtpConnectTimeout.ToString;
+  EdtReadTimeout.Text := FConfigManager.Config.FtpReadTimeout.ToString;
 //  CheckBoxAutoConnect.Checked := FConfigManager.Config.AutoConnect;
 
   // Generale
@@ -191,6 +200,7 @@ end;
 procedure TFrameConfiguration.SaveToConfigManager;
 var
    LConnectionTimeOut : integer;
+   LReadTimeOut : integer;
 begin
 if not Assigned(FConfigManager) then
     Exit;
@@ -204,6 +214,10 @@ if not Assigned(FConfigManager) then
   if TryStrToInt(EdtConnectTimeout.Text, LConnectionTimeOut) then
     FConfigManager.Config.FtpConnectTimeout := LConnectionTimeOut;
 //  FConfigManager.Config.AutoConnect := CheckBoxAutoConnect.Checked;
+
+  if TryStrToInt(EdtReadTimeout.Text, LReadTimeOut) then
+    FConfigManager.Config.FtpReadTimeout := LReadTimeOut;
+
 
   // Generale
   FConfigManager.Config.DeleteEventsOldsThan := SpinEditDelEventsOlderThan.Value;
@@ -227,6 +241,12 @@ begin
       Modified := False;
     end;
   end;
+end;
+
+procedure TFrameConfiguration.btnChiudiClick(Sender: TObject);
+begin
+  if Assigned(FOnCloseRequest) then
+    FOnCloseRequest(Self);
 end;
 
 procedure TFrameConfiguration.ButtonSaveClick(Sender: TObject);

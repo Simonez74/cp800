@@ -1,0 +1,37 @@
+==================================================
+CP800 CONSOLE FTP - STORICO MODIFICHE
+==================================================
+
+Progetto: Cp800_consoleFtp
+Versione corrente: 1.1.1.0
+Data rilascio: 13/11/2026 
+Ambiente: Delphi 13.1
+
+==================================================
+1.0.0 – Prima versione.
+1.1.0 – Nuove funzionalità.
+1.1.1 – Correzione bug.
+2.0.0 – Modifica importante dell'applicazione.
+==================================================
+
+
+--------------------------------------------------
+VERSIONE 1.1.1.0 - 13/11/2026 
+--------------------------------------------------
+
+[NUOVE FUNZIONALITA']
+	- gestione licenza
+[MODIFICHE]
+	- modificata UI
+
+[BUG FIX]
+     
+	  
+	  
+[DATABASE]
+
+[NOTE]
+
+
+
+==================================================

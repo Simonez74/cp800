@@ -50,7 +50,7 @@ type
 
    TParametriConsole = record
      Language : String;  // Linguaggio interfaccia
-     DeleteEventsOldsThan:integer; // elimina eventi registrati più vecchi dei giorni
+     DeleteEventsOldsThan:integer; // elimina eventi registrati piï¿½ vecchi dei giorni
      SalvaPesoConfezioni : boolean;
      ConfigDBMySql : TConfigDBMySql;
    end;
@@ -71,6 +71,11 @@ type
 
     procedure ScriviRecordCp800Storico( CP800StoricoRecord :  TCP800StoricoRecord) ; virtual;
 
+    // Crea una connessione dedicata (stessi parametri di FDConnection) da usare
+    // nei thread/task in background: una TFDConnection non va condivisa tra thread.
+    // Il chiamante deve liberarla.
+    function CreaConnessioneDedicata: TFDConnection;
+
 
 
     //////////////
@@ -90,7 +95,7 @@ type
                            APort: Integer;
                            const ADatabase, AUser, APassword: string): TConnectionResult;
 
-    // Proprietà
+    // Proprietï¿½
     property LastConnectionError: string read FLastConnectionError;
     property ConnectionAttempts: Integer read FConnectionAttempts;
 
@@ -151,7 +156,7 @@ begin
   Inc(FConnectionAttempts);
 
   try
-    // Disconnetto se già connesso
+    // Disconnetto se giï¿½ connesso
     if FDConnection.Connected then
       FDConnection.Connected := False;
 
@@ -217,7 +222,7 @@ begin
     if Result.Success then
       Exit;
 
-    // Se non è l'ultimo tentativo, attendo prima di riprovare
+    // Se non ï¿½ l'ultimo tentativo, attendo prima di riprovare
     if Attempt < AMaxRetries then
     begin
       LogConnectionInfo(Format('Attesa di %d ms prima del prossimo tentativo...',
@@ -293,9 +298,26 @@ begin
 
 end;
 
+function TDMIConsole.CreaConnessioneDedicata: TFDConnection;
+begin
+  Result := TFDConnection.Create(nil);
+  try
+    Result.LoginPrompt := False;
+    // niente cursore di attesa / dialog: siamo fuori dal thread principale
+    Result.ResourceOptions.SilentMode := True;
+    Result.Params.Assign(FDConnection.Params); // include DriverID
+    Result.Connected := True;
+  except
+    Result.Free;
+    raise;
+  end;
+end;
+
 procedure TDMIConsole.ScriviRecordCp800Storico(CP800StoricoRecord: TCP800StoricoRecord);
+// Chiamata da TTask: usa una connessione dedicata, non FDConnection
 var
 //  QCalcolaSessione : TFDQuery;
+  Conn : TFDConnection;
   QUpdate : TFDQuery;
   LSession : integer;
   LStart : integer;
@@ -310,24 +332,28 @@ begin
    lstart := 0;
 
 
+  Conn := nil;
   QUpdate := TFDQuery.Create(nil);
   try
     try
-      QUpdate.Connection := FDConnection;
+      Conn := CreaConnessioneDedicata;
+      QUpdate.Connection := Conn;
 
 
       // se stato macchina = stop -> record 5001 = false
       // nel caso in cui ho chiuso il programma e lo faccio ripartire
-      // scrivo il record solo se non già presente
+      // scrivo il record solo se non giï¿½ presente
       if lstart = 0 then
       begin
-        QUpdate.sql.Clear;
-        QUpdate.sql.Add('select * from cp800Storico');
-        QUpdate.sql.Add(' where cp800_ID = ' + QuotedStr(CP800StoricoRecord.Cp800_id) );
-        QUpdate.sql.Add(' and NumProgram = ' + QuotedStr(CP800StoricoRecord.NumPrg) );
-        QUpdate.sql.Add(' and Date(DataTime) = ' + quotedStr( FormatDateTime('yyyy-mm-dd' , now())));
-        QUpdate.sql.Add(' and TotalWeight = ' + CP800StoricoRecord.TotalWeight);
-        QUpdate.sql.Add(' and TotalPacks = ' + CP800StoricoRecord.TotalPacks);
+        QUpdate.SQL.Text := 'select * from cp800Storico'
+          + ' where cp800_ID = :id and NumProgram = :numprg'
+          + ' and Date(DataTime) = :oggi'
+          + ' and TotalWeight = :weight and TotalPacks = :packs';
+        QUpdate.ParamByName('oggi').AsDate     := Date; // data del PC, come nell'insert
+        QUpdate.ParamByName('id').AsString     := CP800StoricoRecord.Cp800_id;
+        QUpdate.ParamByName('numprg').AsString := CP800StoricoRecord.NumPrg;
+        QUpdate.ParamByName('weight').AsString := CP800StoricoRecord.TotalWeight;
+        QUpdate.ParamByName('packs').AsString  := CP800StoricoRecord.TotalPacks;
         QUpdate.Open;
         if QUpdate.RecordCount > 0 then
           exit;
@@ -353,7 +379,7 @@ begin
       else
       begin
         QUpdate.sql.Add('select max(session_id) as lastSession  from cp800Storico');
-        // cerco record già inseriti come inizio -> startstop = 1
+        // cerco record giï¿½ inseriti come inizio -> startstop = 1
         QUpdate.sql.Add(' where StartStop = 1 and  cp800_ID = ' + QuotedStr(CP800StoricoRecord.Cp800_id) );
         QUpdate.sql.Add(' and NumProgram = ' + QuotedStr(CP800StoricoRecord.NumPrg) );
         QUpdate.sql.Add(' and Date(DataTime) = ' + quotedStr( FormatDateTime('yyyy-mm-dd' , now())));
@@ -404,13 +430,16 @@ begin
        on e: Exception do
        begin
          LogToFile('ScriviRecordCp800Dashboard:' + e.Message );
-//         raise;
+         // rilancio: il chiamante (TTask in FrameMain) deve sapere che la
+         // scrittura Ã¨ fallita, altrimenti logga "Storico salvato"
+         raise;
        end;
 
     end;
 
   finally
     QUpdate.free;
+    Conn.Free;
   end;
 end;
 

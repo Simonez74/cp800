@@ -9,7 +9,7 @@ uses
   ,System.SyncObjs, TypeUnit
   , Winapi.Windows
   , vcl.Forms
-  ;
+  ,IdExceptionCore;
 
 type
   TFtpMonitor = class; // forward
@@ -139,6 +139,8 @@ var
   localPass: string;
   localRemoteFile: string;
   localConnectTimeout: Integer;
+  localReadTimeout: Integer;
+  localPassive: Boolean;
 begin
 
   // Copia thread-safe dei parametri di configurazione
@@ -150,6 +152,8 @@ begin
     localPass := FOwner.FServerCfg.Password;
     localRemoteFile := FOwner.RemoteFileDownload ;
     localConnectTimeout := FOwner.FServerCfg.ConnectTimeout;
+    localReadTimeout := FOwner.FServerCfg.ReadTimeout;
+    localPassive := FOwner.FServerCfg.PassiveMode;
   finally
     FOwner.FLock.Leave;
   end;
@@ -160,7 +164,7 @@ begin
   try
 //    FIdFTP.TransferType := ftASCII;
     FIdFTP.TransferType := ftBinary;
-    FIdFTP.Passive := True;
+    FIdFTP.Passive := localPassive; // da cp800_setup.FtpPassiveMode
     FIdFTP.Host := localHost;
     FIdFTP.Port := localPort;
     FIdFTP.Username := localUser;
@@ -169,7 +173,12 @@ begin
       FIdFTP.ConnectTimeout := localConnectTimeout
     else
       FIdFTP.ConnectTimeout := 5000;
-    FIdFTP.ReadTimeout := 5000;
+
+    if localReadTimeout > 0 then
+      FIdFTP.ReadTimeout := localReadTimeout
+    else
+      FIdFTP.ReadTimeout := 5000;
+
     FIdFTP.OnStatus := FOwner.OnFTPStatus;
 
     attemptConnect := True;
@@ -183,22 +192,43 @@ begin
           attemptConnect := False;
           FOwner.DoQueueLog('FTP connected successfully');
         except
-          on E: Exception do
+          on E : EIdConnectTimeout  do
           begin
             attemptConnect := True;
-            FOwner.DoQueueLog('FTP connect failed, retrying...');
+            FOwner.DoQueueLog('FTP error CONNECTION  TIMEOUT failed, retrying...' + e.Message);
 //          Sleep(RETRY_DELAY_MS);
             waitRes := FOwner.FStopEvent.WaitFor(RETRY_DELAY_MS);
             if waitRes <> wrTimeout then
              break;    //evento di stop
             Continue;
           end;
+          on E : EIdReadTimeout do
+          begin
+            attemptConnect := True;
+            FOwner.DoQueueLog('FTP error READ TIMEOUT failed, retrying...' + e.Message);
+//          Sleep(RETRY_DELAY_MS);
+            waitRes := FOwner.FStopEvent.WaitFor(RETRY_DELAY_MS);
+            if waitRes <> wrTimeout then
+             break;    //evento di stop
+            Continue;
+          end;
+          on E: Exception do
+          begin
+            attemptConnect := True;
+            FOwner.DoQueueLog('FTP connect failed, retrying...' + e.Message);
+//          Sleep(RETRY_DELAY_MS);
+            waitRes := FOwner.FStopEvent.WaitFor(RETRY_DELAY_MS);
+            if waitRes <> wrTimeout then
+             break;    //evento di stop
+            Continue;
+          end;
+
         end;
       end;
       ms := TMemoryStream.Create;
       try
         try
-          FIdFTP.Get(FOwner.RemoteFileDownload, ms, False);
+          FIdFTP.Get(localRemoteFile, ms, False);
 //          pairs := ParseStreamToPairs(ms);
           pairs := ParseStreamFastToPairs(ms);
           try
@@ -218,7 +248,7 @@ begin
             except
             end;
             FOwner.DoQueueError( E);
-            FOwner.DoQueueLog('Error ftp get' + e.Message);
+            FOwner.DoQueueLog('Error ftp get: ' + e.Message);
 //            Sleep(RETRY_DELAY_MS);
             // attendi con possibilità di sveglio immediato tramite evento Stop
             waitRes := FOwner.FStopEvent.WaitFor(RETRY_DELAY_MS);
@@ -272,9 +302,10 @@ end;
 
 destructor TFtpMonitor.Destroy;
 begin
-  FCodeMap := nil;
-
   Stop; // mi assicuro che il thread sia fermo
+
+  // azzero il riferimento solo a thread fermo (il thread lo usa in VariabileDaLeggere)
+  FCodeMap := nil;
 
   if Assigned(FStopEvent) then
     FreeAndNil(FStopEvent);
@@ -340,6 +371,10 @@ begin
   // 2) Imposto Terminate per sicurezza (il thread controlla anche "Terminated" nel while)
   FThread.Terminate;
   FThread.WaitFor; // bloccante
+
+  // scarto le callback accodate dal thread e non ancora eseguite:
+  // altrimenti girerebbero dopo la distruzione di monitor/frame
+  TThread.RemoveQueuedEvents(FThread);
   FreeAndNil(FThread);
 
   // Se non è ancora terminato dopo il timeout, lasco che venga liberato altrove.
@@ -359,6 +394,7 @@ end;
 procedure TFtpMonitor.DoQueueError(E: Exception);
 var
   localOnError: TErrorEvent;
+  localMsg: string;
 begin
   FLock.Enter;
   try
@@ -367,14 +403,24 @@ begin
     FLock.Leave;
   end;
 
+  // E viene liberata alla fine del blocco except del chiamante, quindi NON
+  // può essere usata dentro la procedura accodata: copio il messaggio
+  localMsg := Format('[%s] %s', [E.ClassName, E.Message]);
+
   if Assigned(localOnError) then
-    TThread.Queue(nil,
+    TThread.Queue(TThread.CurrentThread,
       procedure
+      var
+        LErr: Exception;
       begin
+        LErr := Exception.Create(localMsg);
         try
-         // FOnError(Self, E);
-         localOnError(Self, E);
-        except
+          try
+            localOnError(Self, LErr);
+          except
+          end;
+        finally
+          LErr.Free;
         end;
       end);
 end;
@@ -389,12 +435,13 @@ begin
   finally
     FLock.Leave;
   end;
+  // accodo legato al thread corrente: se è il thread del monitor, Stop
+  // rimuove le callback pendenti (RemoveQueuedEvents)
   if Assigned(localOnLog) then
-    TThread.Queue(nil,
+    TThread.Queue(TThread.CurrentThread,
       procedure
       begin
         try
-        //  FOnLog(Self, Msg);
          localOnLog(Self, Msg);
         except
         end;
@@ -505,13 +552,50 @@ end;
 
 
 procedure TFtpMonitor.OnFTPStatus(ASender: TObject; const AStatus: TIdStatus; const AStatusText: string);
+var
+  localOnStatus: TFTPStatusEvent;
+  localText: string;
 begin
-  if assigned (FStatusEvent) then
-    TThread.Queue(nil,
+  // copia locale: la procedura accodata non deve leggere i campi del monitor
+  localOnStatus := FStatusEvent;
+  localText := AStatusText;
+  if Assigned(localOnStatus) then
+    TThread.Queue(TThread.CurrentThread,
+    {
+Il primo parametro di TThread.Queue non decide dove gira il codice. La procedura accodata viene eseguita sempre nel thread principale, sia con nil sia con TThread.CurrentThread. Quel parametro è solo un'etichetta: dice a quale thread appartiene il messaggio in coda.
+
+L'etichetta serve a TThread.RemoveQueuedEvents(AThread), che elimina dalla coda tutti i messaggi non ancora eseguiti con quell'etichetta. È la chiamata che abbiamo rimesso in Stop:
+
+FThread.WaitFor;
+TThread.RemoveQueuedEvents(FThread);   // scarta i messaggi del thread ancora in coda
+FreeAndNil(FThread);
+
+- Con Queue(nil, ...) i messaggi non hanno etichetta, quindi RemoveQueuedEvents(FThread) non li trova e restano in coda.
+- Con Queue(TThread.CurrentThread, ...), chiamato dal thread del monitor, TThread.CurrentThread è proprio il TMonitorThread, cioè lo stesso oggetto di FThread. I messaggi hanno quindi l'etichetta giusta e Stop li può eliminare.
+
+Cosa succede con nil, passo per passo (ad esempio quando entri in Configurazione o chiudi il programma):
+
+1. Il thread FTP chiama DoQueueLog('FTP connected'), oppure Indy chiama OnFTPStatus. Il messaggio va in coda e il thread principale lo eseguirà appena possibile.
+2. Prima che il messaggio venga eseguito, il thread principale chiama StopAllMonitors. Questo ferma il thread (Stop) e libera il TFtpMonitor, poi FFrameList.Clear libera i frame.
+3. Il thread principale torna a gestire i messaggi e trova ancora in coda quello del punto 1. Esegue localOnLog(Self, Msg), ma Self, cioè il monitor, e l'oggetto del gestore, cioè il frame, sono già stati liberati.
+4. Il risultato è un Access Violation, oppure un errore di FastMM in Debug, quasi sempre durante la chiusura. È difficile da riprodurre perché dipende da quanto in fretta succedono le cose. Il tuo ApplicationEvents1Exception tratta l'Access Violation come errore critico e chiude il programma.
+
+Con l'etichetta, al punto 2 Stop elimina il messaggio dalla coda e al punto 3 non resta niente da eseguire.
+
+Due precisazioni:
+- Se la chiamata arriva dal thread principale (ad esempio DoQueueLog('Monitor started') in Start), TThread.Queue esegue la procedura subito, senza accodarla. In quel caso l'etichetta non conta e il comportamento è identico a prima.
+- La copia locale fa parte della stessa protezione. In OnFTPStatus, localOnStatus e localText fanno sì che la procedura accodata non legga i campi del monitor (FStatusEvent) quando viene eseguita, perché in quel momento il monitor potrebbe non esistere più. Il try/except impedisce che un errore nel gestore arrivi all'handler globale.
+
+In sintesi: nil funziona finché il monitor resta vivo, mentre TThread.CurrentThread rende sicura la chiusura, perché Stop può eliminare i messaggi del thread ancora in coda.
+    }
     procedure
     begin
-       FStatusEvent(AStatusText, AStatus )
+      try
+        localOnStatus(localText, AStatus);
+      except
+      end;
     end);
+
 end;
 
 function TMonitorThread.ParseStreamFastToPairs(AStream: TStream): TStringList;

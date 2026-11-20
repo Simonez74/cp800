@@ -81,6 +81,13 @@ object FrameConfiguration: TFrameConfiguration
         Height = 15
         Caption = 'Connect Timeout'
       end
+      object Label1: TLabel
+        Left = 186
+        Top = 237
+        Width = 74
+        Height = 15
+        Caption = 'Read Timeout'
+      end
       object EdMySqlIP: TEdit
         Left = 267
         Top = 23
@@ -96,7 +103,7 @@ object FrameConfiguration: TFrameConfiguration
         Width = 41
         Height = 21
         Caption = 'Test'
-        TabOrder = 7
+        TabOrder = 8
         OnClick = ButtonTestDBClick
       end
       object EdMySqlDbName: TEdit
@@ -146,7 +153,7 @@ object FrameConfiguration: TFrameConfiguration
         Width = 684
         Height = 101
         Align = alBottom
-        TabOrder = 8
+        TabOrder = 9
       end
       object Panel1: TPanel
         Left = 0
@@ -157,7 +164,7 @@ object FrameConfiguration: TFrameConfiguration
         BevelOuter = bvNone
         Color = clWhite
         ParentBackground = False
-        TabOrder = 9
+        TabOrder = 10
         object ButtonApply: TButton
           AlignWithMargins = True
           Left = 501
@@ -226,6 +233,14 @@ object FrameConfiguration: TFrameConfiguration
         Height = 23
         NumbersOnly = True
         TabOrder = 6
+      end
+      object EdtReadTimeout: TEdit
+        Left = 266
+        Top = 234
+        Width = 131
+        Height = 23
+        NumbersOnly = True
+        TabOrder = 7
       end
     end
     object TsCp800_setup: TTabSheet
@@ -586,6 +601,17 @@ object FrameConfiguration: TFrameConfiguration
       ParentFont = False
       Layout = tlCenter
       ExplicitHeight = 28
+    end
+    object btnChiudi: TButton
+      AlignWithMargins = True
+      Left = 589
+      Top = 3
+      Width = 100
+      Height = 28
+      Align = alRight
+      Caption = 'Chiudi'
+      TabOrder = 0
+      OnClick = btnChiudiClick
     end
   end
   object DsCp800_setup: TDataSource

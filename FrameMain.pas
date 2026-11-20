@@ -264,31 +264,15 @@ end;
 
 destructor TFrameCp800.Destroy;
 begin
- FIsShuttingDown := True;
-
-  // DISCONNETTI eventi PRIMA
-  if Assigned(FMonitor) then
-  begin
-    FMonitor.OnParsed := nil;
-    FMonitor.OnLog := nil;
-    FMonitor.OnError := nil;
-    FMonitor.OnStatus := nil;
-  end;
-
-  if Assigned(FMonitorWeight) then
-  begin
-    FMonitorWeight.OnParsed := nil;
-    FMonitorWeight.OnLog := nil;
-    FMonitorWeight.OnError := nil;
-    FMonitorWeight.OnStatus := nil;
-    FMonitorWeight.OnWeight := nil;
-  end;
-
-  // SHUTDOWN dei monitor
+  // SHUTDOWN dei monitor (scollega gli eventi e libera i monitor).
+  // Va chiamato PRIMA di impostare FIsShuttingDown: Shutdown esce subito
+  // se il flag è già True.
   try
     Shutdown;
   except
   end;
+
+  FIsShuttingDown := True;
 
   // Questo forza il decremento del RefCount delle stringhe
   FServerCfg.Inizializza ;
@@ -628,16 +612,25 @@ begin
                  + ' where '
 //                 + ' on s.numProgram = e.NumProgram'
 //                 + ' and s.Session_id = e.Session_id'
-                 + ' cp800_ID = ' +  QuotedStr( FServerCfg.id ));
+                 + ' cp800_ID = :id');
   if DateTimeStorico.Checked  then
-    QStorico.SQL.add( ' and date( datatime) = ' + quotedstr( FormatDateTime('yyyy-mm-dd', DateTimeStorico.DateTime)));
+    QStorico.SQL.add( ' and date( datatime) = :giorno');
   if cbDescrProgram.ItemIndex > 0 then
-      QStorico.SQL.add(' and DsProgram = '+ QuotedStr( cbDescrProgram.Items[cbDescrProgram.ItemIndex]) );
+      QStorico.SQL.add(' and DsProgram = :dsprogram');
   if CbSessionId.ItemIndex > 0 then
-      QStorico.SQL.add(' and Session_ID = '+ CbSessionId.Items[CbSessionId.ItemIndex]);
+      QStorico.SQL.add(' and Session_ID = :session');
 
    // QStorico.SQL.add (' group by NumProgram, session_id ');
   QStorico.SQL.add (' group by NumProgram,DsProgram, session_id ');
+
+  // parametri invece di concatenare i valori nella SQL
+  QStorico.ParamByName('id').AsString := FServerCfg.id;
+  if DateTimeStorico.Checked  then
+    QStorico.ParamByName('giorno').AsDate := DateTimeStorico.Date;
+  if cbDescrProgram.ItemIndex > 0 then
+    QStorico.ParamByName('dsprogram').AsString := cbDescrProgram.Items[cbDescrProgram.ItemIndex];
+  if CbSessionId.ItemIndex > 0 then
+    QStorico.ParamByName('session').AsInteger := StrToIntDef(CbSessionId.Items[CbSessionId.ItemIndex], 0);
   QStorico.Open;
 end;
 
@@ -942,15 +935,13 @@ begin
       // state
       Lbl9001.Caption := LPairs.Values['9001'];
 
-      try
-        totSpeed := strtoint(LPairs.Values['4015']) +
-                    strtoint(LPairs.Values['4016']) +
-                    strtoint(LPairs.Values['4017']) +
-                    strtoint(LPairs.Values['4018']) ;
-        lblTotSpeed.Caption := IntToStr(totSpeed);
-      except
-        lblTotSpeed.Caption := 'error';
-      end;
+      // StrToIntDef: un nastro senza valore (es. non gestito) vale 0
+      // invece di far mostrare 'error' sul totale
+      totSpeed := StrToIntDef(LPairs.Values['4015'], 0) +
+                  StrToIntDef(LPairs.Values['4016'], 0) +
+                  StrToIntDef(LPairs.Values['4017'], 0) +
+                  StrToIntDef(LPairs.Values['4018'], 0);
+      lblTotSpeed.Caption := IntToStr(totSpeed);
 
 
       if uppercase(Lbl5001.Caption) = 'TRUE' then
